@@ -18,7 +18,7 @@ using Nemo, ParamPanPam
 Ra, (a, b) = PolynomialRing(QQ, [:a, :b])
 Rb, (x, y) = PolynomialRing(Rb, [:x, :y])
 
-F = F = [b*x^2 + a//b, x*y - 5a];
+F = [b*x^2 + a//b, x*y - 5a];
 
 ParamPanPam.paramgb(F)
 [ Info: Given 2 polynomials in K(y)[x]
