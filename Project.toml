@@ -1,4 +1,5 @@
 name = "ParamPanPam.jl"
+uuid = "3e851597-e36f-45a9-af0a-b7781937992f"
 
 [deps]
 Groebner = "0b43b601-686d-58a3-8a1c-6623616c7cd4"
