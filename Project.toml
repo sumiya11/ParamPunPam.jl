@@ -1,3 +1,5 @@
+name = "ParamPanPam.jl"
+
 [deps]
 Groebner = "0b43b601-686d-58a3-8a1c-6623616c7cd4"
 Nemo = "2edaba10-b0f1-5616-af89-8c11ac63239a"
