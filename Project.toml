@@ -1,4 +1,4 @@
-name = "ParamPanPam.jl"
+name = "ParamPanPam"
 uuid = "3e851597-e36f-45a9-af0a-b7781937992f"
 
 [deps]
