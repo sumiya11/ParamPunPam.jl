@@ -41,6 +41,9 @@ function _paramgb(polys)
         if ispow2(i)
             @info "$i points used.."
         end
+        if i > 2^11
+            break
+        end
         if success
             break
         end
@@ -107,47 +110,47 @@ function initialize_interpolators!(shapegb::ShapeOfGb)
     resize!(shapegb.interpolators, length(shapegb.degrees))
     resize!(shapegb.statuses, length(shapegb.degrees))
     resize!(shapegb.interpolatedcoeffs, length(shapegb.degrees))
-    M = maximum(map(c -> maximum(map(maximum, c)), shapegb.degrees))
-    @info "Interpolation is bound by degrees $M, $M"
-    one_of_a_kind = ExactSparseInterpolations.adaptiveVanDerHoevenLecerf(Rparam, M, M)
+    M1, M2 = 0, 0
+    for i in 1:length(shapegb.degrees)
+        for j in 1:length(shapegb.degrees[i])
+            M1 = max(M1, shapegb.degrees[i][j][1])
+            M2 = max(M2, shapegb.degrees[i][j][2])
+        end
+    end
+    @info "Interpolation is bound by degrees $M1, $M2"
+    shapegb.interpolators = ExactSparseInterpolations.several_adaptiveVanDerHoevenLecerf(Rparam, M1, M2, shapegb.degrees)
     for i in 1:length(shapegb.degrees)
         shapegb.interpolatedcoeffs[i] = Vector{Tuple{elem_type(Rparam), elem_type(Rparam)}}(undef, length(shapegb.degrees[i]))
-        shapegb.statuses[i] = falses(length(shapegb.degrees[i]))
-        shapegb.interpolators[i] = Vector{Any}(undef, length(shapegb.degrees[i]))
+        shapegb.statuses[i] = Vector{Bool}(undef, length(shapegb.degrees[i]))
         for j in 1:length(shapegb.degrees[i])
+            shapegb.statuses[i][j] = false
             shapegb.interpolatedcoeffs[i][j] = (zero(Rparam), zero(Rparam))
-            shapegb.interpolators[i][j] = ExactSparseInterpolations.adaptiveVanDerHoevenLecerf(Rparam, M, M)
         end
     end
     shapegb.interpolators
 end
 
 function try_interpolate!(shapegb::ShapeOfGb)
-    one_of_a_kind = first(first(shapegb.interpolators))
-    x_point = ExactSparseInterpolations.next_point!(one_of_a_kind)
-    for ii in shapegb.interpolators
-        for (ij, iii) in enumerate(ii)
-            ij == 1 && continue
-            ExactSparseInterpolations.next_point!(iii)
-        end
-        ExactSparseInterpolations.synchronize!(one_of_a_kind, ii)
-    end
+    x_point = next_point!(shapegb.interpolators)
     Ip = specialize(shapegb, x_point)
     basis = groebner(Ip)
-    # !assert_shape!(shapegb, basis) && continue
-    for i in 1:length(basis)
-        for (j, (interpolator, status)) in enumerate(zip(shapegb.interpolators[i], shapegb.statuses[i]))
+    # println(basis)
+    !assert_shape(shapegb, basis) && (throw("Bad point sequence!"))
+    for i in 1:length(shapegb.interpolators)
+        for j in 1:length(shapegb.interpolators[i])
             # if already interpolated
-            status && continue
+            # shapegb.statuses[i][j] && continue
             y_point = coeff(basis[i], j)
-            success, (P, Q) = ExactSparseInterpolations.next!(interpolator, y_point)
+            success, (P, Q) = next!(shapegb.interpolators[i][j], y_point)
             # if (i, j) == (1, 2)
             #     @info "" P Q
             # end
             # success = success && (total_degree(P), total_degree(Q)) == shapegb.degrees[i][j]
-            shapegb.statuses[i][j] = success
+            if success && !shapegb.statuses[i][j]
+                @info "Coefficient basis[$i][$j] is interpolated!" P//Q
+            end
             if success
-                @warn "Coefficient basis[$i][$j] is interpolated!" P//Q
+                shapegb.statuses[i][j] = success
                 shapegb.interpolatedcoeffs[i][j] = (P, Q)
             end
         end
@@ -184,7 +187,11 @@ function majorrule(bases::Vector{Vector{Poly}}) where {Poly}
     first(bases)
 end
 
-function shapeof(basis)
+function assert_shape(shapeof::ShapeOfGb, basis)
+    shapeof.shape == basisshape(basis)
+end
+
+function basisshape(basis)
     [collect(monomials(f)) for f in basis]
 end
 
@@ -201,7 +208,7 @@ function discover_monomials!(shapegb::ShapeOfGb; η=2)
     specializations = map(_ -> specialize(shapegb, randpoint(shapegb)), 1:1 + η)
     bases = map(groebner, specializations)
     basis = majorrule(bases)
-    shapegb.shape = shapeof(basis)
+    shapegb.shape = basisshape(basis)
     @info "The shape of the basis is: $(length(basis)) polynomials with monomials" shapegb.shape
     @debug "" shapegb.shape
     shapegb.shape
@@ -240,7 +247,12 @@ function discover_degrees!(shapegb::ShapeOfGb; η=2)
     all_interpolated = false
     a = randpoint(shapegb)
     s = randpoint(shapegb)
+    ip = 0
     while !all_interpolated
+        ip += 1
+        if ispow2(ip)
+            @info "$ip points used.."
+        end
         x_point = ExactSparseInterpolations.next_point!(one_of_a_kind)
         # shift !!!
         Ip = specialize(shapegb, a .* x_point .+ s)
@@ -264,6 +276,7 @@ function discover_degrees!(shapegb::ShapeOfGb; η=2)
         all_interpolated = all(map(all, statuses))
     end
     shapegb.degrees = degrees
+    @info "Success! $(ip) points used."
     @info "The exponents in the coefficients" degrees
     shapegb.degrees
 end
