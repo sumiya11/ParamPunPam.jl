@@ -107,7 +107,7 @@ function ShapeOfGb(polys::Vector{Poly}) where {Poly}
     Rspec, _ = PolynomialRing(K, map(string, gens(Rx)))
     Rlifted, _ = PolynomialRing(Ra, map(string, gens(Rx)))
     fractionfreepolys = liftcoeffs(polys, Rlifted)
-    @info "Lifting to K[y][x]" fractionfreepolys
+    @info "Lifting to K[y][x].."
     prime = 2^31-1
     Ramodp,_ = PolynomialRing(GF(prime), map(string, gens(Ra)))
     Rxmodp, _ = PolynomialRing(Ramodp, map(string, gens(Rx)))
