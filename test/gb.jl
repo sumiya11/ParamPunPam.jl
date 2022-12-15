@@ -31,19 +31,24 @@
         [x + (a + b + c)^3//(a*c*b)^2],
         [a*x^2 + b^2*x + (a + 1), 
          x*y + b*y*z + 1//(a*b), 
-         x*z + c*z + b]
+         x*z + c*z + b],
+        [a^5*x + a^30//(b^31 + 1)],
+        [x + a^100//(b^150 + 1), y - (a*b*c)^100],
+        [x + map_coefficients(c -> one(QQ), (a + b + c)^10)//(a*b*c + 1)^5]
     ]
     answers = [
         [x + (a + b + c)^3//(a*c*b)^2],
         [y + (-a^2*b^2*c^2 - a^2*b^2 - 
         a^2*c^4 - 2*a^2*c^2 - a^2 + a*b^4*c + 2*a*b^2*c^3 + 2*a*b^2*c - a*b^2 - 2*a*c^2 - 2*a - b^4*c^2 + 2*b^2*c - 1)//(a^3*b^6 + 2*a^3*b^4 + a^3*b^2*c^2 + a^3*b^2 + a^2*b^6*c - a^2*b^4*c + 2*a^2*b^4 + a^2*b^2*c^2 + 2*a^2*b^2 - a*b^8 - a*b^4*c + a*b^2)*z + (-2*a*b^2*c - a*c^3 - a*c + b^4 + b^2*c^2 - c)//(a^2*b^5 + 2*a^2*b^3 + a^2*b*c^2 + a^2*b + a*b^5*c - a*b^3*c + 2*a*b^3 + a*b*c^2 + 2*a*b - b^7 - b^3*c + b), 
         x + (-a*c^2 - a + b^2*c - 1)//(a*b)*z + (-a*c + b^2)//a, 
-        z^2 + (2*a*b*c - b^3)//(a*c^2 + a - b^2*c + 1)*z + (a*b^2)//(a*c^2 + a - b^2*c + 1)]
+        z^2 + (2*a*b*c - b^3)//(a*c^2 + a - b^2*c + 1)*z + (a*b^2)//(a*c^2 + a - b^2*c + 1)],
+        [x + a^25//(b^31 + 1)],
+        [y - (a*b*c)^100, x + a^100//(b^150 + 1)],
+        [x + map_coefficients(c -> one(QQ), (a + b + c)^10)//(a*b*c + 1)^5]
     ]
     for (case, answer) in zip(cases, answers)
         G = ParamPanPam.paramgb(case)
         @warn "" case G
         @test G == answer 
     end
-
 end
