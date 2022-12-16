@@ -10,7 +10,13 @@ if !haskey(Pkg.installed(), "ExactSparseInterpolations")
 end
 import ExactSparseInterpolations
 
+# Rational reconstructions
 include("reconstruct.jl")
+
+# Stuff
+include("long-forgotten-truth.jl")
+
+# The main algorithm
 include("gb.jl")
 
 export paramgb
