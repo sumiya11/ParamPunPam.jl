@@ -125,7 +125,7 @@ function saturate(I, Q)
     parentring, vs = Nemo.PolynomialRing(base, [strings..., "t"], ordering=:lex)
 
     t = last(vs)
-    @info "" base I parentring
+    # @info "" base I parentring
     It = [
         evaluate(f, vs[1:end-1])
         # change_base_ring(base, f, parent=parentring)[1]
@@ -160,7 +160,7 @@ function generators_to_saturated_ideal(genset)
 
     Fs = map(numerator ∘ (g -> g * Q), genset)
 
-    @info "" Q Fs
+    # @info "" Q Fs
 
     ystrings = ["y$i" for i in 1:nvariables]
     yoverx, yoverxvars = Nemo.PolynomialRing(
