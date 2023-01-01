@@ -17,7 +17,9 @@ include("reconstruct.jl")
 include("long-forgotten-truth.jl")
 
 # The main algorithm
-include("gb.jl")
+# include("gb.jl")
+
+include("buchberger.jl")
 
 export paramgb
 
