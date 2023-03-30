@@ -1,12 +1,11 @@
-
 # Adapted from https://discourse.julialang.org/t/expression-parser/41880/7
 # code by Alan R. Rogers, Professor of Anthropology, University of Utah
 
 # Adapted from https://github.com/x3042/Exact-reduction-of-ODE-systems/blob/main/src/myeval.jl
-# by Alexander D., Higher School of Economics
+# by A. Demin, HSE
 
 # Adapted from https://github.com/sumiya11/RationalFunctionFields.jl/blob/main/src/myeval.jl
-# by Alexander D., Higher School of Economics
+# by A. Demin, HSE
 
 function myeval(e::Union{Expr,Symbol,Number}, map::Dict{Symbol,fmpq_mpoly})
     try

@@ -3,7 +3,7 @@ using TestSetExtensions
 
 using Nemo
 
-include("../src/ParamPanPam.jl")
+include("../src/ParamPunPam.jl")
 
 @testset "All tests" verbose=true begin
     @includetests ["gb"]

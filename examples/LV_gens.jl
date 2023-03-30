@@ -1,24 +1,24 @@
 
-LV_gens = ParamPanPam.load_generators("C:\\data\\projects\\ParamPanPam.jl\\examples\\LV_gens.txt")
+LV_gens = ParamPunPam.load_generators("C:\\data\\projects\\ParamPunPam.jl\\examples\\LV_gens.txt")
 
-I = ParamPanPam.generators_to_saturated_ideal(LV_gens)
+I = ParamPunPam.generators_to_saturated_ideal(LV_gens)
 
-ParamPanPam.paramgb(I)
-
-# 
-
-goodwin = ParamPanPam.load_generators("C:\\data\\projects\\ParamPanPam.jl\\examples\\Goodwin.txt")
-
-I = ParamPanPam.generators_to_saturated_ideal(goodwin)
-
-goodwin_gb = ParamPanPam.paramgb(I)
+ParamPunPam.paramgb(I)
 
 # 
 
-sontag = ParamPanPam.load_generators("C:\\data\\projects\\ParamPanPam.jl\\examples\\Sontag_gen.txt");
+goodwin = ParamPunPam.load_generators("C:\\data\\projects\\ParamPunPam.jl\\examples\\Goodwin.txt")
 
-I = ParamPanPam.generators_to_saturated_ideal(sontag);
+I = ParamPunPam.generators_to_saturated_ideal(goodwin)
 
-sontag_gb = ParamPanPam.paramgb(I)
+goodwin_gb = ParamPunPam.paramgb(I)
+
+# 
+
+sontag = ParamPunPam.load_generators("C:\\data\\projects\\ParamPunPam.jl\\examples\\Sontag_gen.txt");
+
+I = ParamPunPam.generators_to_saturated_ideal(sontag);
+
+sontag_gb = ParamPunPam.paramgb(I)
 
 
