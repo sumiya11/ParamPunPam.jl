@@ -56,8 +56,8 @@ for (i, m) in enumerate(models)
 
     gens = Array{AbstractAlgebra.Generic.Frac{Nemo.fmpq_mpoly}, 1}(identifiable_functions_raw)
     
-    ideal = ParamPanPam.generators_to_saturated_ideal(gens)
+    ideal = ParamPunPam.generators_to_saturated_ideal(gens)
     
-    gb = ParamPanPam.paramgb(ideal)
+    gb = ParamPunPam.paramgb(ideal)
     @show gb
 end

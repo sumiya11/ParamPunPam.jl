@@ -1,13 +1,13 @@
-### ParamPanPam.jl - parametric Groebner bases.
+### ParamPunPam.jl - parametric Groebner bases.
 
 ### What ?
 
 Groebner bases over $\mathbb{K}(a)[x]$, where $\mathbb{K}$ is either $\mathbb{Z}_p$ or $\mathbb{Q}$, and $a$ are treated as transcendental numbers.
 
-You can install `ParamPanPam.jl` with the following command in Julia
+You can install `ParamPunPam.jl` with the following command in Julia
 
 ```julia
-import Pkg; Pkg.add(url="https://github.com/sumiya11/ParamPanPam.jl")
+import Pkg; Pkg.add(url="https://github.com/sumiya11/ParamPunPam.jl")
 ```
 
 ### How ?
@@ -15,11 +15,11 @@ import Pkg; Pkg.add(url="https://github.com/sumiya11/ParamPanPam.jl")
 See the following example:
 
 ```julia
-using ParamPanPam
+using ParamPunPam
 using Nemo
 
-Ra, (a,b,c) = PolynomialRing(QQ, ["a","b","c"])
-Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)
+Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"], ordering=:degrevlex)
+R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
 
 F = [
     a*x^2 + b^2*x + (a + 1),
@@ -27,7 +27,7 @@ F = [
     x*z + c*z + b
 ];
 
-ParamPanPam.paramgb(F)
+ParamPunPam.paramgb(F)
 [ Info: Given 3 polynomials in K(y)[x]
 [ Info: Variables: AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.Frac{fmpq_mpoly}}[x, y, z]
 [ Info: Parameters: fmpq_mpoly[a, b, c]

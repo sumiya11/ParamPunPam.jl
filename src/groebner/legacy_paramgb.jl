@@ -10,12 +10,12 @@ The algorithm is probabilistic and succeeds with a high probability.
 Examples:
 
 ```julia
-using Nemo, ParamPanPam
+using Nemo, ParamPunPam
 
 Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
 R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"])
 
-ParamPanPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
+ParamPunPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
 ```
 
 """

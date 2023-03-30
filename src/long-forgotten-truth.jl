@@ -121,7 +121,7 @@ function saturate(I, Q)
     R = parent(I[1])
     base = base_ring(R)
     strings = map(String, symbols(R))
-    parentring, vs = Nemo.PolynomialRing(base, [strings..., "t"], ordering=:lex)
+    parentring, vs = Nemo.PolynomialRing(base, [strings..., "t"], ordering=:degrevlex)
 
     t = last(vs)
     # @info "" base I parentring
@@ -165,7 +165,7 @@ function generators_to_saturated_ideal(genset)
     yoverx, yoverxvars = Nemo.PolynomialRing(
         basepolyring,
         ystrings,
-        ordering=:lex
+        ordering=:degrevlex
     )
 
     Fx = Fs
@@ -205,14 +205,14 @@ function load_generators(filepath)
     
     strings = map(String, split(lines[1], ", "))
 
-    S, xs = Nemo.PolynomialRing(Nemo.QQ, strings, ordering=:lex)
+    S, xs = Nemo.PolynomialRing(Nemo.QQ, strings, ordering=:degrevlex)
 
     mapping = Dict{Symbol, fmpq_mpoly}(
         Symbol(x) => Nemo.gen(S, i)
         for (i, x) in enumerate(strings)
     )
     
-    nemoring, = Nemo.PolynomialRing(Nemo.QQ, strings, ordering=:lex)
+    nemoring, = Nemo.PolynomialRing(Nemo.QQ, strings, ordering=:degrevlex)
     
     generators = Nemo.Generic.Frac{fmpq_mpoly}[]
 

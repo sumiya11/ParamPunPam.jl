@@ -10,12 +10,12 @@ The algorithm is probabilistic and succeeds with a high probability.
 Examples:
 
 ```julia
-using Nemo, ParamPanPam
+using Nemo, ParamPunPam
 
-Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
-R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"])
+Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"], ordering=:degrevlex)
+R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
 
-ParamPanPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
+ParamPunPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
 ```
 
 """
@@ -59,10 +59,10 @@ function _paramgb(polys, metainfo)
     # Discover the degrees of the parametric coefficients
     discover_param_degrees!(state, modular)
     # Interpolate the exponents in the parametric coefficients
-    # (this uses 1 prime number)
+    # (this uses exactly 1 prime number)
     interpolate_param_exponents!(state, modular)
     # Interpolate the rational coefficients of the parametric coefficients
-    # (this is expected to use MANY prime numbers)
+    # (this is expected to use 1 prime number, but may use more)
     recover_coefficients!(state, modular)
     # Combine and return the above two 
     basis = construct_basis(state)
@@ -82,7 +82,8 @@ function discover_shape!(state, modular; η=2)
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:1 + η)
     polysspecmodp = map(point -> specialize(polysmodp, point), randompoints)
-    bases = map(F -> groebner(F), polysspecmodp)
+    @assert all(F -> ordering(parent(first(F))) === :degrevlex, polysspecmodp)
+    bases = map(F -> groebner(F, linalg=:prob), polysspecmodp)
     # decide the "right" basis according to the major rule
     basis = majorrule(bases)
     state.shape = basisshape(first(bases))
@@ -120,7 +121,8 @@ function discover_param_degrees!(state, modular)
         end
         for (idx, point) in enumerate(x_points)
             Ip = specialize(polysmodp, point)
-            basis = groebner(Ip)
+            @assert ordering(parent(first(Ip))) === :degrevlex
+            basis = groebner(Ip, linalg=:prob)
             for i in 1:length(coeffs)
                 for j in 1:length(coeffs[i])
                     coeffs[i][j][idx] = coeff(basis[i], j)
@@ -157,7 +159,7 @@ function interpolate_param_exponents!(state, modular)
     @info "Interpolating the exponents in parameters.."
     Rx = parent(first(state.polys_fracfree))
     Ra = base_ring(Rx)
-    Ru, _ = PolynomialRing(modular.ff, symbols(Ra))
+    Ru, _ = PolynomialRing(modular.ff, symbols(Ra), ordering=:degrevlex)
     K = base_ring(Ru)
     n = length(gens(Ra))
     Nt, Dt = 1, 1
@@ -187,7 +189,8 @@ function interpolate_param_exponents!(state, modular)
         end
         for (idx, point) in enumerate(x_points)
             Ip = specialize(polysmodp, point)
-            basis = groebner(Ip)
+            @assert ordering(parent(first(Ip))) === :degrevlex
+            basis = groebner(Ip, linalg=:prob)
             for i in 1:length(coeffs)
                 for j in 1:length(coeffs[i])
                     coeffs[i][j][idx] = coeff(basis[i], j)
@@ -224,7 +227,7 @@ function recover_coefficients!(state, modular)
     Rorig = parent(first(state.polys))
     Rparam = base_ring(first(state.polys))
     Ra = base_ring(Rx)
-    Ru, _ = PolynomialRing(modular.ff, symbols(Ra))
+    Ru, _ = PolynomialRing(modular.ff, symbols(Ra), ordering=:degrevlex)
     K = base_ring(Ru)
     n = length(gens(Ra))
     polysreconstructed = Vector{elem_type(Rorig)}(undef, length(state.shape))
@@ -257,6 +260,7 @@ function reducemodp(polys, modular::ModularTracker)
         ), 
         polys
     )
+    @info "Reduced!!"
     polysmodp
 end
 
