@@ -14,8 +14,8 @@ function test_paramgb(cases, answers)
     end
 end
 
-@testset "GB over Q(a)" begin
-    Ra, (a,) = PolynomialRing(QQ, ["a"])
+@testset "GB over Q(a...)" begin
+    Ra, (a,) = PolynomialRing(Nemo.QQ, ["a"], ordering=:degrevlex)
     Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)
     cases = [
         [x, x + a],
@@ -36,7 +36,7 @@ end
     ]
     test_paramgb(cases[1:end-1], answers[1:end-1])
 
-    Ra, (a1,a2,a3,a4,a5) = PolynomialRing(QQ, ["a1","a2","a3","a4","a5"])
+    Ra, (a1,a2,a3,a4,a5) = PolynomialRing(Nemo.QQ, ["a1","a2","a3","a4","a5"], ordering=:degrevlex)
     Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)
     cases = [
         [(x - a1)*(y - a2)*(z - a3)*(x - a4)*(x - a5)],
@@ -46,7 +46,7 @@ end
     ]
     test_paramgb(cases, answers)
 
-    Ra, (a,b,c) = PolynomialRing(QQ, ["a","b","c"])
+    Ra, (a,b,c) = PolynomialRing(QQ, ["a","b","c"], ordering=:degrevlex)
     Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)
     cases = [
         [x + (a + b + c)^3//(a*c*b)^2]

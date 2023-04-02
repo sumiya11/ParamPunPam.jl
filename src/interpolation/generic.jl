@@ -14,10 +14,13 @@ function random_point(ring)
 end
 
 # returns an array of L distinct points from the given field
-function distinct_points(field, L)
+function distinct_points(field, L, prev=nothing)
     ans = [random_point(field) for _ in 1:L]
+    if prev !== nothing
+        ans = vcat(prev, ans)
+    end
     allunique(ans) && return ans
-    distinct_points(field, L)
+    distinct_points(field, L, prev)
 end
 
 homogenize(ring; varname="x0") = first(PolynomialRing(base_ring(ring), append!([varname], map(string, AbstractAlgebra.symbols(ring)))))

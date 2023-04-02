@@ -11,7 +11,7 @@ goodwin = ParamPunPam.load_generators("C:\\data\\projects\\ParamPunPam.jl\\examp
 
 I = ParamPunPam.generators_to_saturated_ideal(goodwin)
 
-goodwin_gb = ParamPunPam.paramgb(I)
+goodwin_gb = ParamPunPam.paramgb(I, rational_interpolator=:cuytlee)
 
 # 
 
