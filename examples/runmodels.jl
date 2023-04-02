@@ -60,10 +60,26 @@ models = [
             y1(t) = w(t),
             y2(t) = z(t)
         )
+    ),
+    Dict(
+        :name => "SLIQR",
+        :ode => @ODEmodel(
+            S'(t) = -b * In(t) * S(t) * Ninv - u(t) * S(t) * Ninv,
+            L'(t) = b * In(t) * S(t) * Ninv - a * L(t),
+            In'(t) = a * L(t) - g * In(t) + s * Q(t),
+            Q'(t) = (1 - e) * g * In(t) - s * Q(t),
+            y(t) = In(t) * Ninv
+        )
     )
 ]
 
+# if empty, runs all
+to_run = ["SLIQR"]
+
 for m in models
+    if length(to_run) > 0 && !(m[:name] in to_run)
+        continue
+    end
     @info "Processing $(m[:name])"
     ode = m[:ode]
     ioeqs = find_ioequations(ode)
@@ -75,4 +91,8 @@ for m in models
     
     gb = ParamPunPam.paramgb(ideal)
     @show gb
+    @info "The coefficients are:"
+    for p in gb
+        @info collect(coefficients(p))
+    end 
 end
