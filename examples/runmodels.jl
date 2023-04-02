@@ -50,7 +50,7 @@ models = [
     # Current result: (lm*q - 1)//(lm*d*k^2*u), -1//(c*h*lm*d*k*beta^2), -k*q*beta, -b - 2*h - 2*a, -a, -u, -d, -h
     # Simpler version: (lm*q - 1)//(lm*k^2), c*lm*d*k*beta^2, k*q*beta, b, a, u, d, h (Could be simpler ?)
     Dict(
-        :name => "HIV (to check)",
+        :name => "HIV",
         :ode => @ODEmodel(
             x'(t) = lm - d * x(t) - beta * x(t) * v(t),
             y'(t) = beta * x(t) * v(t) - a * y(t),
@@ -61,6 +61,9 @@ models = [
             y2(t) = z(t)
         )
     ),
+    # The most simplified version of the result I could get by hand is
+    # Ninv, b, s, g + a,  (1 - e) * g * (a - s), a * e * g
+    # but I have no idea how I did this...
     Dict(
         :name => "SLIQR",
         :ode => @ODEmodel(
@@ -74,7 +77,7 @@ models = [
 ]
 
 # if empty, runs all
-to_run = ["SLIQR"]
+to_run = ["HIV"]
 
 for m in models
     if length(to_run) > 0 && !(m[:name] in to_run)
