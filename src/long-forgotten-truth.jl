@@ -205,14 +205,14 @@ function load_generators(filepath)
     
     strings = map(String, split(lines[1], ", "))
 
-    S, xs = Nemo.PolynomialRing(Nemo.QQ, strings, ordering=:degrevlex)
+    S, xs = Nemo.PolynomialRing(Nemo.QQ, strings)
 
     mapping = Dict{Symbol, fmpq_mpoly}(
         Symbol(x) => Nemo.gen(S, i)
         for (i, x) in enumerate(strings)
     )
     
-    nemoring, = Nemo.PolynomialRing(Nemo.QQ, strings, ordering=:degrevlex)
+    nemoring, = Nemo.PolynomialRing(Nemo.QQ, strings)
     
     generators = Nemo.Generic.Frac{fmpq_mpoly}[]
 

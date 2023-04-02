@@ -201,7 +201,7 @@ function interpolate_param_exponents!(
     @info "Interpolating the exponents in parameters.."
     Rx = parent(first(state.polys_fracfree))
     Ra = base_ring(Rx)
-    Ru, _ = PolynomialRing(modular.ff, symbols(Ra), ordering=:degrevlex)
+    Ru, _ = PolynomialRing(modular.ff, symbols(Ra))
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape
@@ -282,7 +282,9 @@ end
 function recover_coefficients!(state, modular)
     @info "Recovering the coefficients.."
     Rorig = parent(first(state.polys))
-    Rparam = base_ring(first(state.polys))
+    Rparam = base_ring(Rorig)
+    Ra = base_ring(Rx)
+    n = length(gens(Ra))
     polysreconstructed = Vector{elem_type(Rorig)}(undef, length(state.shape))
     p = convert(Int, characteristic(modular.ff))
     for i in 1:length(state.shape)
