@@ -34,7 +34,7 @@ end
          y^2 + (-a^2 + 1)//(a^2 + 1)*z^2 + (-a + 1)//(a^2 + 1)*y + (a - 1)//(a^2 + 1)*z,
          z^3 + (-3//2*a^5 + a^4 - a^3 + 1//2*a^2 - 1//2*a - 1//2)//(a^6 + 1//2*a^5 + a^4 + a^3 + 1//2*a)*z^2 + (1//2*a^3 - 1//2)//(a^6 + 1//2*a^5 + a^4 + a^3 + 1//2*a)*y + (1//2*a^4 - a^3 + 1//2*a^2 - 1//2*a + 1//2)//(a^6 + 1//2*a^5 + a^4 + a^3 + 1//2*a)*z]
     ]
-    test_paramgb(cases[1:end-1], answers[1:end-1])
+    test_paramgb(cases, answers)
 
     Ra, (a1,a2,a3,a4,a5) = PolynomialRing(Nemo.QQ, ["a1","a2","a3","a4","a5"], ordering=:degrevlex)
     Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)

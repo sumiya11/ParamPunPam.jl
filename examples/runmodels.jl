@@ -87,7 +87,7 @@ models = [
 ]
 
 # if empty, runs all
-to_run = []
+to_run = ["St"]
 
 for m in models
     if length(to_run) > 0 && !(m[:name] in to_run)

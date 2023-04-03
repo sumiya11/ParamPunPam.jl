@@ -1,6 +1,7 @@
 using Test
 using TestSetExtensions
 
+import AbstractAlgebra
 using Nemo
 
 include("../src/ParamPunPam.jl")
