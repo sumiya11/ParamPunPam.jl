@@ -1,8 +1,8 @@
 ### ParamPunPam.jl - parametric Groebner bases.
 
-### What ?
+### What?
 
-Groebner bases over $\mathbb{K}(a)[x]$, where $\mathbb{K}$ is either $\mathbb{Z}_p$ or $\mathbb{Q}$, and $a$ are treated as transcendental numbers.
+Groebner bases over $\mathbb{Q}(a)[x]$, where $a$ are treated as transcendental numbers.
 
 You can install `ParamPunPam.jl` with the following command in Julia
 
@@ -10,7 +10,7 @@ You can install `ParamPunPam.jl` with the following command in Julia
 import Pkg; Pkg.add(url="https://github.com/sumiya11/ParamPunPam.jl")
 ```
 
-### How ?
+### How?
 
 See the following example:
 
@@ -18,67 +18,55 @@ See the following example:
 using ParamPunPam
 using Nemo
 
-Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"], ordering=:degrevlex)
+Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
 R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
 
 F = [
-    a*x^2 + b^2*x + (a + 1),
+    x^2 + x + (a + 1),
     x*y + b*y*z + 1//(a*b),
-    x*z + c*z + b
+    x*z + z + b
 ];
 
 ParamPunPam.paramgb(F)
-[ Info: Given 3 polynomials in K(y)[x]
-[ Info: Variables: AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.Frac{fmpq_mpoly}}[x, y, z]
-[ Info: Parameters: fmpq_mpoly[a, b, c]
-┌ Info: Lifting to K[y][x]
-│   fractionfreepolys =
-│    3-element Vector{AbstractAlgebra.Generic.MPoly{fmpq_mpoly}}:
-│     a*x^2 + b^2*x + a + 1
-│     a*b*x*y + a*b^2*y*z + 1
-└     x*z + c*z + b
-[ Info: Specializing at 1 + 2 random points to guess the shape..
-[ Info: Reducing modulo 2147483647..
+[ Info: Given 3 functions in K(a, b)[x, y, z]
+[ Info: Specializing at 1 + 2 random points to guess the basis shape..
+[ Info: Reducing modulo Galois field with characteristic 4611686018427388039..
 ┌ Info: The shape of the basis is: 3 polynomials with monomials
-│   shapegb.shape =
-│    3-element Vector{Vector{gfp_mpoly}}:
+│   state.shape =
+│    3-element Vector{Vector{fpMPolyRingElem}}:
 │     [y, z, 1]
-│     [x, z, 1]
+│     [x, z]
 └     [z^2, z, 1]
-[ Info: Specializing at random points to guess the exponents in the coefficients..
-[ Info: 1 points used..
-[ Info: 2 points used..
-[ Info: 4 points used..
-[ Info: 8 points used..
-[ Info: 16 points used..
-[ Info: Success! 21 points used.
-┌ Info: The exponents in the coefficients
-│   degrees =
+[ Info: Specializing at random points to guess the total degrees in parameters..
+[ Info: Using 6 points..
+[ Info: Using 10 points..
+[ Info: Using 18 points..
+[ Info: Using 34 points..
+[ Info: Success! 34 points used.
+┌ Info: The total degrees in the coefficients
+│   state.param_degrees =
 │    3-element Vector{Vector{Tuple{Int64, Int64}}}:
-│     [(0, 0), (6, 9), (4, 7)]
-│     [(0, 0), (3, 2), (2, 1)]
-└     [(0, 0), (3, 3), (3, 3)]
-[ Info: Reducing modulo 2147483659..
-[ Info: Initializing interpolation routines..
-[ Info: Interpolating 9 coefficients at once. Interpolation is bound by degrees 6, 9
-[ Info: 17 points used..
-[ Info: 34 points used..
-[ Info: 68 points used..
-[ Info: 136 points used..
-[ Info: 272 points used..
-[ Info: 544 points used..
-[ Info: 1088 points used..
-[ Info: 2176 points used..
-[ Info: Success! 2448 points used.
-[ Info: Sanity check passed.
+│     [(0, 0), (1, 5), (0, 4)]
+│     [(0, 0), (1, 1)]
+└     [(0, 0), (1, 1), (2, 1)]
+[ Info: Interpolating the exponents in parameters..
+┌ Info: Interpolating for degrees:
+└ numerator 2, denominator 5
+[ Info: Using 18 points..
+[ Info: Success! 18 points used.
+┌ Info: Output summary:
+│     Maximal interpolated degrees are: 2 for num. and 5 for den.
+│     Maximal number of interpolated terms are: 2 for num. and 3 for den.
+└     
+[ Info: Recovering the coefficients..
+[ Info: Success! Used 1 prime in total :)
 
-3-element Vector{AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.Frac{fmpq_mpoly}}}: y + (-a^2*b^2*c^2 - a^2*b^2 - a^2*c^4 - 2*a^2*c^2 - a^2 + a*b^4*c + 2*a*b^2*c^3 + 2*a*b^2*c - a*b^2 - 2*a*c^2 - 2*a - b^4*c^2 + 2*b^2*c - 1)//(a^3*b^6 + 2*a^3*b^4 + a^3*b^2*c^2 + 
-a^3*b^2 + a^2*b^6*c - a^2*b^4*c + 2*a^2*b^4 + a^2*b^2*c^2 + 2*a^2*b^2 - a*b^8 - a*b^4*c + 
-a*b^2)*z + (-2*a*b^2*c - a*c^3 - a*c + b^4 + b^2*c^2 - c)//(a^2*b^5 + 2*a^2*b^3 + a^2*b*c^2 + a^2*b + a*b^5*c - a*b^3*c + 2*a*b^3 + a*b*c^2 + 2*a*b - b^7 - b^3*c + b)
- x + (-a*c^2 - a + b^2*c - 1)//(a*b)*z + (-a*c + b^2)//a
- z^2 + (2*a*b*c - b^3)//(a*c^2 + a - b^2*c + 1)*z + (a*b^2)//(a*c^2 + a - b^2*c + 1)
+3-element Vector{AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}}:
+ y + (-a - 1)//(a^2*b^2 + a*b^4 + a*b^2)*z - 1//(a^2*b + a*b^3 + a*b)
+ x + (-a - 1)//b*z
+ z^2 + b//(a + 1)*z + b^2//(a + 1)
 ```
 
-### Why ?
+### Why?
 
 //\\
