@@ -46,8 +46,8 @@ end
     ]
     test_paramgb(cases, answers)
 
-    Ra, (a,b,c) = PolynomialRing(QQ, ["a","b","c"], ordering=:degrevlex)
-    Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)
+    Ra, (a,b,c) = PolynomialRing(QQ, ["a","b","c"])
+    Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:deglex)
     cases = [
         [x + (a + b + c)^3//(a*c*b)^2]
     ]

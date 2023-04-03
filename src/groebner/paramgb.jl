@@ -168,7 +168,7 @@ function discover_param_degrees!(state, modular)
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize(polysmodp, point)
-            @assert ordering(parent(first(Ip))) === :degrevlex
+            # @assert ordering(parent(first(Ip))) === :degrevlex
             basis = groebner(Ip, linalg=:prob)
             
             !check_shape(shape, basis) && @warn "Bad substitution!"
@@ -203,7 +203,7 @@ function interpolate_param_exponents!(
     @info "Interpolating the exponents in parameters.."
     Rx = parent(first(state.polys_fracfree))
     Ra = base_ring(Rx)
-    Ru, _ = PolynomialRing(modular.ff, symbols(Ra))
+    Ru, _ = PolynomialRing(modular.ff, symbols(Ra), ordering=Nemo.ordering(Ra))
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape
@@ -249,7 +249,7 @@ function interpolate_param_exponents!(
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize(polysmodp, point)
-            @assert ordering(parent(first(Ip))) === :degrevlex
+            # @assert ordering(parent(first(Ip))) === :degrevlex
             
             basis = groebner(Ip, linalg=:prob)
             !check_shape(shape, basis) && @warn "Bad substitution!"

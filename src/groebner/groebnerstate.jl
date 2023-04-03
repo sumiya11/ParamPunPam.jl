@@ -22,7 +22,7 @@ mutable struct GroebnerState{T, F}#, D, E, C}
         K = base_ring(Ra)
         @info "Given $(length(polys)) functions in K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
         # Remove denominators from the input by lifting it to a polynomial ring
-        Rlifted, _ = PolynomialRing(Ra, map(string, gens(Rx)))
+        Rlifted, _ = PolynomialRing(Ra, map(string, gens(Rx)), ordering=Nemo.ordering(Rx))
         polys_fracfree = liftcoeffs(polys, Rlifted)
         # @info "Lifting to polynomials in K[$params][$polyvars].."
         new{T, eltype(eltype(polys_fracfree))}(

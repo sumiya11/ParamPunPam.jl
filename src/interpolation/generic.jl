@@ -23,8 +23,8 @@ function distinct_points(field, L, prev=nothing)
     distinct_points(field, L, prev)
 end
 
-homogenize(ring; varname="x0") = first(PolynomialRing(base_ring(ring), append!([varname], map(string, AbstractAlgebra.symbols(ring)))))
-dehomogenize(ring) = first(PolynomialRing(base_ring(ring), map(string, AbstractAlgebra.symbols(ring))[2:end]))
+homogenize(ring; varname="x0") = first(PolynomialRing(base_ring(ring), append!([varname], map(string, AbstractAlgebra.symbols(ring))), ordering=Nemo.ordering(ring)))
+dehomogenize(ring) = first(PolynomialRing(base_ring(ring), map(string, AbstractAlgebra.symbols(ring))[2:end], ordering=Nemo.ordering(ring)))
 
 univariatize(::Type{Ring}, ring; varname="x") where {Ring<:AbstractAlgebra.MPolyRing} = first(PolynomialRing(base_ring(ring), [varname]))
 univariatize(::Type{Ring}, ring; varname="x") where {Ring<:AbstractAlgebra.PolyRing} = first(PolynomialRing(base_ring(ring), varname))
