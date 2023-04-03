@@ -75,7 +75,9 @@ function interpolate!(fbot::PrimesBenOrTiwari, xs, ys)
     # @assert degree(B) == T
     # assuming this is O(T logT^k logq^m) for some k and m, 
     # where q is the order of the base field
-    mi = map(inv, roots(B))
+    mi = roots(B)
+    any(iszero, mi) && return zero(Rx)
+    mi = map(inv, mi)
     # @assert length(mi) == T
     # @info "" mi
     # find the monomials of the interpolant,

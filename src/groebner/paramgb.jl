@@ -208,6 +208,16 @@ function discover_param_degrees!(state, modular)
     nothing
 end
 
+function get_interpolator(interpolator::CuytLee, Ru, Nd, Dd, Nds, Dds, Nt, Dt)
+    FasterCuytLee(
+        Ru, Nd, Dd, Nds, Dds, Nt, Dt)
+end
+
+function get_interpolator(interpolator::FasterVanDerHoevenLecerf, Ru, Nd, Dd, Nds, Dds, Nt, Dt)
+    FasterVanDerHoevenLecerf(
+        Ru, Nd, Dd, Nds, Dds, Nt, Dt)
+end
+
 function interpolate_param_exponents!(
         state, modular, up_to_degree, rational_interpolator)
     @info "Interpolating the exponents in parameters.."
@@ -241,13 +251,7 @@ function interpolate_param_exponents!(
         end
     end
 
-    interpolator = if rational_interpolator isa CuytLee 
-        FasterCuytLee(
-            Ru, Nd, Dd, Nds, Dds, Nt, Dt)
-    else
-        FasterVanDerHoevenLecerf(
-            Ru, Nd, Dd, Nds, Dds, Nt, Dt)
-    end
+    interpolator = get_interpolator(rational_interpolator, Ru, Nd, Dd, Nds, Dds, Nt, Dt)
 
     J = 1
     all_interpolated = false
