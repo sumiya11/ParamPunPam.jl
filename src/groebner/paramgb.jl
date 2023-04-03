@@ -213,7 +213,7 @@ function get_interpolator(interpolator::CuytLee, Ru, Nd, Dd, Nds, Dds, Nt, Dt)
         Ru, Nd, Dd, Nds, Dds, Nt, Dt)
 end
 
-function get_interpolator(interpolator::FasterVanDerHoevenLecerf, Ru, Nd, Dd, Nds, Dds, Nt, Dt)
+function get_interpolator(interpolator::VanDerHoevenLecerf, Ru, Nd, Dd, Nds, Dds, Nt, Dt)
     FasterVanDerHoevenLecerf(
         Ru, Nd, Dd, Nds, Dds, Nt, Dt)
 end
