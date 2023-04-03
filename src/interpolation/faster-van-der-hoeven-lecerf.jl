@@ -205,8 +205,10 @@ function interpolate!(vdhl::FasterVanDerHoevenLecerf, evaluations::Vector{OO}) w
     # normalize by the trailing_coefficient,
     # T*n*log(q)
     normalization_factor = trailing_coefficient(den)
-    num = map_coefficients(c -> div(c, normalization_factor), num)
-    den = map_coefficients(c -> div(c, normalization_factor), den)
+    if !iszero(normalization_factor)
+        num = map_coefficients(c -> div(c, normalization_factor), num)
+        den = map_coefficients(c -> div(c, normalization_factor), den)
+    end
     num, den
 end
 

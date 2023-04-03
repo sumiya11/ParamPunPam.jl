@@ -76,7 +76,7 @@ function interpolate!(fbot::PrimesBenOrTiwari, xs, ys)
     # assuming this is O(T logT^k logq^m) for some k and m, 
     # where q is the order of the base field
     mi = roots(B)
-    any(iszero, mi) && return zero(Rx)
+    any(iszero, mi) && return one(Rx)
     mi = map(inv, mi)
     # @assert length(mi) == T
     # @info "" mi

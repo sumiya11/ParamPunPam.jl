@@ -198,8 +198,10 @@ function interpolate!(cl::FasterCuytLee, evaluations::Vector{OO}) where {OO}
     # P = evaluate(P, undilated)
     # Q = evaluate(Q, undilated)
     normalization_factor = trailing_coefficient(Q)
-    P = map_coefficients(c -> div(c, normalization_factor), P)
-    Q = map_coefficients(c -> div(c, normalization_factor), Q)
+    if !iszero(normalization_factor)
+        P = map_coefficients(c -> div(c, normalization_factor), P)
+        Q = map_coefficients(c -> div(c, normalization_factor), Q)
+    end
     P, Q
 end
 
