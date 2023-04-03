@@ -28,6 +28,9 @@ mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
     ωs
     ξij_T
     ωξij0_T
+    points
+
+    J
 
     # Construct an FasterVanDerHoevenLecerf object from the
     # collected info of the interpolant' degrees/terms 
@@ -63,8 +66,14 @@ mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
         # (!) we take the maximum for each of the partial degrees,
         # in order to be able use the same points for numerator/denominator
         NDds = map(maximum, zip(Nds, Dds))
-        Ni = PrimesBenOrTiwari(ringhom, Nt, NDds)
-        Di = PrimesBenOrTiwari(ringhom, Dt, NDds)
+        Ni = PrimesBenOrTiwari(ringhom, Nt, Nd)
+        Di = PrimesBenOrTiwari(ringhom, Dt, Dd)
+        shift = random_point(ringhom)
+        dilation = random_point(ringhom)
+        ω = startingpoint(Ni)
+
+        T = max(Nt, Dt)
+
         new{Ring,typeof(Runiv)}(
             ring, 
             Nd, Dd, 
@@ -72,41 +81,66 @@ mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
             Nt, Dt, 
             cauchy, 
             Ni, Di,
-            nothing, nothing, nothing, nothing, nothing,
-            nothing, nothing
+            T, shift, dilation, ω, 
+            map(i -> ω .^ i, 0:2T-1), 
+            Vector{Vector{elem_type(K)}}(undef, 2T),
+            Vector{Vector{elem_type(K)}}(undef, 2T),
+            Vector{Vector{elem_type(K)}}(undef, 2T*(Nd + Dd + 2)),
+            -1
         )
     end
 end
 
 function get_evaluation_points!(vdhl::FasterVanDerHoevenLecerf)
+    if vdhl.J == -1
+        vdhl.J = 0
+    else
+        vdhl.J = 2*vdhl.T
+        vdhl.Nt *= 2
+        vdhl.Dt *= 2
+        vdhl.T = max(vdhl.Nt, vdhl.Dt)
+        ringhom = vdhl.Ni.ring
+        vdhl.Ni = PrimesBenOrTiwari(ringhom, vdhl.Nt, vdhl.Nd)
+        vdhl.Di = PrimesBenOrTiwari(ringhom, vdhl.Dt, vdhl.Dd)
+        resize!(vdhl.ξij_T, 2vdhl.T)
+        resize!(vdhl.ωξij0_T, 2vdhl.T)
+        resize!(vdhl.points, 2vdhl.T*(vdhl.Nd + vdhl.Dd + 2))
+    end
+
     R = vdhl.ring
     K = base_ring(R)
     Nd, Dd = vdhl.Nd, vdhl.Dd
     Nt, Dt = vdhl.Nt, vdhl.Dt
     Ni, Di = vdhl.Ni, vdhl.Di
-    T = max(Nt, Dt); vdhl.T = T
+
+    T = vdhl.T
     # Polynomial ring K[x0,x1,x2...xn]
     Rhom = Ni.ring
     # We will substitute points, such that
     # point[j]*dilation[j] + shift[j]
-    shift = random_point(Rhom); vdhl.shift = shift
-    dilation = random_point(Rhom); vdhl.dilation = dilation
+    shift = vdhl.shift
+    dilation = vdhl.dilation
     # The starting point in the geometric sequence...
-    ω = startingpoint(Ni); vdhl.ω = ω
+    ω = vdhl.ω
+    vdhl.ωs = ωs = map(i -> ω .^ i, 0:2T-1)
     # ... and the sequence itself (the first degree is 0)
-    ωs = map(i -> ω .^ i, 0:2T-1); vdhl.ωs = [x for x in ωs]
+    J = vdhl.J
+
+    used = Dict{elem_type(K), Bool}()
+    ξij = distinct_points(K, Nd + Dd + 2)
     ωξij = Vector{Vector{elem_type(K)}}(undef, Nd + Dd + 2)
-    ωξij0 = Vector{elem_type(K)}(undef, Nd + Dd + 2); vdhl.ωξij0_T = Vector{Vector{elem_type(K)}}(undef, 2T)
-    ξij = distinct_points(K, Nd + Dd + 2); vdhl.ξij_T = Vector{Vector{elem_type(K)}}(undef, 2T)
-    points = Vector{Vector{elem_type(K)}}(undef, 2T*(Nd + Dd + 2))
+    ωξij0 = Vector{elem_type(K)}(undef, Nd + Dd + 2)
 
     # This cycle below is 
     # T*((D + 2)*4n*log(q) + D*L + 2*D*log(q) + M(D)log(D)),
     # which is T*M(D)log(D) + O(T*n*D*log(q)) + T*D*L
-    for i in 0:2T-1
+    for i in J:2T-1
         ωi = ωs[i + 1]
         ω0 = ωi[1]
-        ξij[1] = random_point(K)
+        used[ξij[1]] = true
+        while haskey(used, ξij[1])
+            ξij[1] = random_point(K)
+        end
         # The cycle below is (D + 2)*4n*log(q)
         @inbounds for j in 1:Nd + Dd + 2
             !isassigned(ωξij, j) && (ωξij[j] = zeros(K, length(ω) - 1))
@@ -122,9 +156,10 @@ function get_evaluation_points!(vdhl::FasterVanDerHoevenLecerf)
         end
         vdhl.ξij_T[i + 1] = [x for x in ξij]
         vdhl.ωξij0_T[i + 1] = [x for x in ωξij0]
-        points[(i)*(Nd + Dd + 2) + 1 : (i + 1)*(Nd + Dd + 2)] .= deepcopy(ωξij)
+        vdhl.points[(i)*(Nd + Dd + 2) + 1 : (i + 1)*(Nd + Dd + 2)] .= deepcopy(ωξij)
     end
-    points
+
+    vdhl.points
 end
 
 function interpolate!(vdhl::FasterVanDerHoevenLecerf, evaluations::Vector{OO}) where {OO}
@@ -164,7 +199,7 @@ function interpolate!(vdhl::FasterVanDerHoevenLecerf, evaluations::Vector{OO}) w
     den = evaluate(den, undilated)
     # dehomogenization,
     # substitute (x0,x1,x2...,xn) = (1,x1,x2...,xn),
-    xs0 = [one(R), gens(R)...]
+    xs0 = vcat([one(R)], gens(R))
     num = evaluate(num, xs0)
     den = evaluate(den, xs0)
     # normalize by the trailing_coefficient,

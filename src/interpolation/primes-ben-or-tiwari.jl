@@ -11,20 +11,17 @@ mutable struct PrimesBenOrTiwari{Ring}
     # the number of terms in the interpolant
     T::Int
     # the vector of partial degrees of the interpolant
-    Ds::Vector{Int}
+    # Ds::Vector{Int}
     # the vector of prime numbers used in substitution
     ps::Vector{UInt}
-    function PrimesBenOrTiwari(ring::Ring, T::Integer, Ds::Vector{<:Integer}) where {Ring}
+    function PrimesBenOrTiwari(ring::Ring, T::Integer, D::Integer) where {Ring}
         @assert T >= 0
-        @assert all(>=(0), Ds)
-        @assert length(Ds) == nvars(ring)
         K = base_ring(ring)
         n = nvars(ring)
         @assert (order(K) - 1) > 2T
         ps = Primes.nextprimes(2, n)
-        D = sum(Ds)
         D*log(ps[end]) >= log(UInt(order(K))) && @warn "In Prime number approach the field order might be too small" ps D order(K)
-        new{Ring}(ring, T, Ds, ps)
+        new{Ring}(ring, T, ps)
     end
 end
 

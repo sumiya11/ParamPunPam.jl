@@ -1,6 +1,6 @@
 using Logging
 
-using AbstractAlgebra
+import AbstractAlgebra
 using Nemo
 
 using StructuralIdentifiability

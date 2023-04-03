@@ -19,6 +19,7 @@ include("interpolation/field-generators.jl")
 include("interpolation/kron-ben-or-tiwari.jl")
 include("interpolation/primes-ben-or-tiwari.jl")
 include("interpolation/faster-van-der-hoeven-lecerf.jl")
+include("interpolation/faster-cuyt-lee.jl")
 # include("interpolation/interpolators.jl")
 
 include("groebner/groebnerstate.jl")

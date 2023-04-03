@@ -12,8 +12,8 @@ Examples:
 ```julia
 using Nemo, ParamPunPam
 
-Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
-R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"])
+Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"], ordering=:degrevlex)
+R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
 
 ParamPunPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
 ```
