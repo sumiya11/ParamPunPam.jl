@@ -130,7 +130,7 @@ function saturate(I, Q)
         # change_base_ring(base, f, parent=parentring)[1]
         for f in I
     ]
-    sat = 1 - Q * t
+    sat = 1 - evaluate(Q, vs[1:end-1]) * t
     push!(It, sat)
     It, t
 end
@@ -180,7 +180,7 @@ function generators_to_saturated_ideal(genset)
         for (Fyi, Fxi) in zip(Fy, Fx)
     ]
 
-    I, t = saturate(I, Q)
+    I, t = saturate(I, Qy)
 
     # (I=I, yoverx=yoverx, basepolyring=basepolyring,
     #     nvariables=nvariables, ground=ground, ystrings=ystrings,

@@ -73,6 +73,16 @@ models = [
             Q'(t) = (1 - e) * g * In(t) - s * Q(t),
             y(t) = In(t) * Ninv
         )
+    ),
+    Dict(
+        :name => "St",
+        :ode => @ODEmodel(
+            S'(t) = r * S(t) - (e + a * W(t)) * S(t) - d * W(t) * S(t) + g * R(t),
+            R'(t) = rR * R(t) + (e + a * W(t)) * S(t) - dr * W(t) * R(t) - g * R(t),
+            W'(t) = Dd * (T - W(t)),
+            y1(t) = S(t) + R(t),
+            y2(t) = T
+        )
     )
 ]
 
@@ -91,8 +101,10 @@ for m in models
     gens = Array{AbstractAlgebra.Generic.Frac{Nemo.fmpq_mpoly}, 1}(identifiable_functions_raw)
 
     ideal = ParamPunPam.generators_to_saturated_ideal(gens)
-
+    @show ideal
+    
     gb = ParamPunPam.paramgb(ideal)
+    @show parent(first(gb))
     @show gb
     @info "The coefficients are:"
     for p in gb
