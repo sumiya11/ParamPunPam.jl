@@ -12,7 +12,7 @@ Examples:
 ```julia
 using Nemo, ParamPunPam
 
-Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"], ordering=:degrevlex)
+Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
 R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
 
 ParamPunPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
@@ -101,11 +101,12 @@ function discover_shape!(state, modular; η=2)
     @info "Specializing at $(1) + $(η) random points to guess the basis shape.."
     # Guess the shape for 1 lucky prime:
     polysmodp = reducemodp(state.polys_fracfree, modular)
+    state.field_to_polys[modular.ff] = polysmodp
     @label Start
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:1 + η)
     polysspecmodp = map(point -> specialize(polysmodp, point), randompoints)
-    @assert all(F -> ordering(parent(first(F))) === :degrevlex, polysspecmodp)
+    # @assert all(F -> ordering(parent(first(F))) === :degrevlex, polysspecmodp)
     bases = map(F -> groebner(F, linalg=:prob), polysspecmodp)
     # decide the "right" basis according to the major rule
     success, basis = majorrule(bases)
@@ -119,7 +120,7 @@ function discover_shape!(state, modular; η=2)
     nothing
 end
 
-is_interpolated_heuristic(dD, DD, dN, DN) = (dD + 3) < div(2DD, 4) && (dN + 3) < div(2DN, 4)
+is_interpolated_heuristic(dD, DD, dN, DN) = (dD + 3) < div(3DD, 4) && (dN + 3) < div(3DN, 4)
 
 function discover_param_degrees!(state, modular)
     @info "Specializing at random points to guess the total degrees in parameters.."
@@ -128,7 +129,8 @@ function discover_param_degrees!(state, modular)
     Rx = parent(first(state.polys_fracfree))
     Ra = base_ring(Rx)
     n = length(gens(Ra))
-    polysmodp = reducemodp(state.polys_fracfree, modular)
+    # polysmodp = reducemodp(state.polys_fracfree, modular)
+    polysmodp = state.field_to_polys[modular.ff]
     shift = distinct_points(K, n)
     shape = state.shape
 
@@ -201,11 +203,12 @@ function interpolate_param_exponents!(
     @info "Interpolating the exponents in parameters.."
     Rx = parent(first(state.polys_fracfree))
     Ra = base_ring(Rx)
-    Ru, _ = PolynomialRing(modular.ff, symbols(Ra), ordering=:degrevlex)
+    Ru, _ = PolynomialRing(modular.ff, symbols(Ra))
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape
-    polysmodp = reducemodp(state.polys_fracfree, modular)
+    polysmodp = state.field_to_polys[modular.ff]
+    # polysmodp = reducemodp(state.polys_fracfree, modular)
 
     Nt, Dt = 1, 1
     total_degrees = state.param_degrees
@@ -268,6 +271,7 @@ function interpolate_param_exponents!(
                 dp, dq = total_degree(P), total_degree(Q)
                 if !(dp >= total_degrees[i][j][1] && dq >= total_degrees[i][j][2])
                     all_interpolated = false
+                    break
                 end
             end
         end
@@ -275,7 +279,14 @@ function interpolate_param_exponents!(
     end
     state.param_exponents = param_exponents
     @info "Success! $(npoints) points used."
-    @info "The exponents in the coefficients" state.param_exponents
+    maxDn = maximum(l -> maximum(total_degree ∘ first, l), param_exponents)
+    maxDd = maximum(l -> maximum(total_degree ∘ last, l), param_exponents)
+    maxTn = maximum(l -> maximum(length ∘ first, l), param_exponents)
+    maxTd = maximum(l -> maximum(length ∘ last, l), param_exponents)
+    @info "Output description:
+    Maximal interpolated degrees are: $maxDn for num. and $maxDd for den.
+    Maximal number of interpolated terms are: $maxTn for num. and $maxTd for den.
+    "
     nothing
 end
 

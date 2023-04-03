@@ -12,6 +12,7 @@ mutable struct GroebnerState{T, F}#, D, E, C}
     # coefficients in the parameters `a` of the Groebner basis
     # (in Q)
     param_coeffs#::Vector{Vector{C}}
+    field_to_polys
 
     function GroebnerState(polys::Vector{T}) where {T}
         Rx = parent(first(polys))
@@ -26,7 +27,8 @@ mutable struct GroebnerState{T, F}#, D, E, C}
         # @info "Lifting to polynomials in K[$params][$polyvars].."
         new{T, eltype(eltype(polys_fracfree))}(
             polys, polys_fracfree, 
-            nothing, nothing, nothing, nothing
+            nothing, nothing, nothing, nothing,
+            Dict()
         )
     end
 end

@@ -77,7 +77,7 @@ models = [
 ]
 
 # if empty, runs all
-to_run = ["HIV"]
+to_run = []
 
 for m in models
     if length(to_run) > 0 && !(m[:name] in to_run)
@@ -89,9 +89,9 @@ for m in models
     identifiable_functions_raw = extract_identifiable_functions_raw(collect(values(ioeqs)), ode.parameters)
 
     gens = Array{AbstractAlgebra.Generic.Frac{Nemo.fmpq_mpoly}, 1}(identifiable_functions_raw)
-    
+
     ideal = ParamPunPam.generators_to_saturated_ideal(gens)
-    
+
     gb = ParamPunPam.paramgb(ideal)
     @show gb
     @info "The coefficients are:"
