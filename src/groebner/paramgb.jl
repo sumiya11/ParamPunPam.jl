@@ -40,7 +40,7 @@ function paramgb(
         ) where {T}
     up_to_degree = get(kwargs, :up_to_degree, (div(typemax(Int), 2), div(typemax(Int), 2)))
     guess_degrees = get(kwargs, :guess_degrees, :no)
-    rational_interpolator = get(kwargs, :rational_interpolator, CuytLee())
+    rational_interpolator = get(kwargs, :rational_interpolator, VanDerHoevenLecerf())
     polynomial_interpolator = get(kwargs, :polynomial_interpolator, :primes_benortiwari)    
     metainfo = peek_at_input(polys)
     unified_polys = unify_input(polys, metainfo)
