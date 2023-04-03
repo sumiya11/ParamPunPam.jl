@@ -1,5 +1,5 @@
 
-function test_paramgb(cases, answers)
+function test_paramgb(cases, answers; kwargs...)
     for (case, answer) in zip(cases, answers)
         G = nothing
         # try
@@ -8,8 +8,11 @@ function test_paramgb(cases, answers)
         #     @warn "Exception: $e"
         #     rethrow(e)
         # end
-        G = ParamPunPam.paramgb(case)
-        @warn "" case G
+        G = ParamPunPam.paramgb(case; kwargs...)
+        @warn "" case G kwargs
+        if haskey(kwargs, :up_to_degree)
+            continue
+        end 
         @test G == answer 
     end
 end
@@ -35,6 +38,19 @@ end
          z^3 + (-3//2*a^5 + a^4 - a^3 + 1//2*a^2 - 1//2*a - 1//2)//(a^6 + 1//2*a^5 + a^4 + a^3 + 1//2*a)*z^2 + (1//2*a^3 - 1//2)//(a^6 + 1//2*a^5 + a^4 + a^3 + 1//2*a)*y + (1//2*a^4 - a^3 + 1//2*a^2 - 1//2*a + 1//2)//(a^6 + 1//2*a^5 + a^4 + a^3 + 1//2*a)*z]
     ]
     test_paramgb(cases, answers)
+    test_paramgb(
+        cases, answers,
+        rational_interpolator=ParamPunPam.CuytLee()
+    )
+    test_paramgb(
+        cases, answers,
+        up_to_degree=(1, 1),
+        rational_interpolator=ParamPunPam.CuytLee()
+    )
+    test_paramgb(
+        cases, answers,
+        up_to_degree=(4, 4),
+    )
 
     Ra, (a1,a2,a3,a4,a5) = PolynomialRing(Nemo.QQ, ["a1","a2","a3","a4","a5"], ordering=:degrevlex)
     Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)

@@ -23,10 +23,10 @@ using Nemo
     
     ParamPunPam.paramgb(f)
 
-    Rparam, Ai = PolynomialRing(QQ, ["A$i" for i in 1:10])
+    Rparam, Ai = PolynomialRing(QQ, ["A$i" for i in 1:7])
     R, (x,y,z) = PolynomialRing(FractionField(Rparam), ["x","y","z"], ordering=:degrevlex)
     f = [
-        sum(Ai)*x*y + (Ai[1] + Ai[10])//(sum(Ai)),
+        sum(Ai)*x*y + (Ai[1] + Ai[6])//(sum(Ai)),
         y*z - sum(Ai),
         x^2 + Ai[5] // (sum(Ai))
     ]

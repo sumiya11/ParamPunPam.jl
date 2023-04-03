@@ -20,7 +20,7 @@ include("interpolation/kron-ben-or-tiwari.jl")
 include("interpolation/primes-ben-or-tiwari.jl")
 include("interpolation/faster-van-der-hoeven-lecerf.jl")
 include("interpolation/faster-cuyt-lee.jl")
-# include("interpolation/interpolators.jl")
+include("interpolation/interpolators.jl")
 
 include("groebner/groebnerstate.jl")
 include("groebner/reconstruct.jl")
@@ -28,5 +28,6 @@ include("groebner/modulartracker.jl")
 include("groebner/paramgb.jl")
 
 export paramgb
+export CuytLee, VanDerHoevenLecerf
 
 end

@@ -22,7 +22,9 @@ mutable struct FasterCuytLee{Ring, UnivRing}
     ω
     ωs
     ξij_T
-    ωξij0_T
+    points
+
+    J
 
     function FasterCuytLee(
         ring::Ring,
@@ -40,42 +42,73 @@ mutable struct FasterCuytLee{Ring, UnivRing}
         cauchy = FasterCauchy(Runiv, Nd, Dd)
         Ni = PrimesBenOrTiwari(ring, Nt, Nd)
         Di = PrimesBenOrTiwari(ring, Dt, Dd)
+
+        shift = random_point(ring)
+        dilation = random_point(ring)
+        ω = startingpoint(Ni)
+
+        T = max(Nt, Dt)
+
         new{Ring,typeof(Runiv)}(
             ring, 
             Nd, Dd, 
             Nt, Dt, 
             cauchy, 
             Ni, Di,
-            nothing, nothing, nothing, nothing, nothing,
-            nothing, nothing
+            T, shift, dilation, ω, 
+            map(i -> ω .^ i, 0:2T-1), 
+            Vector{Vector{elem_type(K)}}(undef, 2T),
+            Vector{Vector{elem_type(K)}}(undef, 2T*(Nd + Dd + 2)),
+            -1
         )
     end
 end
 
 function get_evaluation_points!(cl::FasterCuytLee)
+    if cl.J == -1
+        cl.J = 0
+    else
+        cl.J = 2*cl.T
+        cl.Nt *= 2
+        cl.Dt *= 2
+        cl.T = max(cl.Nt, cl.Dt)
+        ringhom = cl.Ni.ring
+        cl.Ni = PrimesBenOrTiwari(ringhom, cl.Nt, cl.Nd)
+        cl.Di = PrimesBenOrTiwari(ringhom, cl.Dt, cl.Dd)
+        resize!(cl.ξij_T, 2cl.T)
+        resize!(cl.points, 2cl.T*(cl.Nd + cl.Dd + 2))
+    end
+    
     R = cl.ring
     K = base_ring(R)
     Nd, Dd = cl.Nd, cl.Dd
     Nt, Dt = cl.Nt, cl.Dt
     Ni, Di = cl.Ni, cl.Di
-    T = max(Nt, Dt); cl.T = T
+    
+    T = cl.T
     # Polynomial ring K[x0,x1,x2...xn]
     Rhom = Ni.ring
     # We will substitute points, such that
     # point[j]*dilation[j] + shift[j]
-    shift = random_point(Rhom); cl.shift = shift
-    dilation = random_point(Rhom); cl.dilation = dilation
+    shift = cl.shift
+    dilation = cl.dilation
     # The starting point in the geometric sequence...
-    ω = startingpoint(Ni); cl.ω = ω
+    ω = cl.ω
+    cl.ωs = ωs = map(i -> ω .^ i, 0:2T-1)
     # ... and the sequence itself (the first degree is 0)
-    ωs = map(i -> ω .^ i, 0:2T-1); cl.ωs = [x for x in ωs]
-    ωξij = Vector{Vector{elem_type(K)}}(undef, Nd + Dd + 2)
-    ξij = distinct_points(K, Nd + Dd + 2); cl.ξij_T = Vector{Vector{elem_type(K)}}(undef, 2T)
-    points = Vector{Vector{elem_type(K)}}(undef, 2T*(Nd + Dd + 2))
+    J = cl.J
 
-    @inbounds for i in 0:2T-1
+    used = Dict{elem_type(K), Bool}()
+    ξij = distinct_points(K, Nd + Dd + 2)
+    ωξij = Vector{Vector{elem_type(K)}}(undef, Nd + Dd + 2)
+    ωξij0 = Vector{elem_type(K)}(undef, Nd + Dd + 2)
+
+    @inbounds for i in J:2T-1
         ωi = ωs[i + 1]
-        ξij[1] = random_point(K)
+        used[ξij[1]] = true
+        while haskey(used, ξij[1])
+            ξij[1] = random_point(K)
+        end
         # The cycle below is (D + 2)*4n*log(q)
         for j in 1:Nd + Dd + 2
             !isassigned(ωξij, j) && (ωξij[j] = zeros(K, length(ω)))
@@ -88,9 +121,9 @@ function get_evaluation_points!(cl::FasterCuytLee)
             end
         end
         cl.ξij_T[i + 1] = [x for x in ξij]
-        points[(i)*(Nd + Dd + 2) + 1 : (i + 1)*(Nd + Dd + 2)] .= deepcopy(ωξij)
+        cl.points[(i)*(Nd + Dd + 2) + 1 : (i + 1)*(Nd + Dd + 2)] .= deepcopy(ωξij)
     end
-    points
+    cl.points
 end
 
 function interpolate!(cl::FasterCuytLee, evaluations::Vector{OO}) where {OO}
@@ -125,7 +158,7 @@ function interpolate!(cl::FasterCuytLee, evaluations::Vector{OO}) where {OO}
             end
         end
     end
-    
+
     for (cfs, interpolated, degreebound, higher_contributions) in (
                 (P_coeffs, P_interpolated, Nd, P_higher_degrees_contribution),
                 (Q_coeffs, Q_interpolated, Dd, Q_higher_degrees_contribution)
@@ -156,10 +189,14 @@ function interpolate!(cl::FasterCuytLee, evaluations::Vector{OO}) where {OO}
                     higher_contributions[ii][dd+1] += evaluate(tdii, ωs[ii])
                 end
             end
+
         end
     end
     P = sum(P_interpolated)
     Q = sum(Q_interpolated)
+    # undilated = xs .* map(inv, dilation) 
+    # P = evaluate(P, undilated)
+    # Q = evaluate(Q, undilated)
     normalization_factor = trailing_coefficient(Q)
     P = map_coefficients(c -> div(c, normalization_factor), P)
     Q = map_coefficients(c -> div(c, normalization_factor), Q)

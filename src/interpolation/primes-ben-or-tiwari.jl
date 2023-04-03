@@ -89,7 +89,7 @@ function interpolate!(fbot::PrimesBenOrTiwari, xs, ys)
     # O(M(T)logT).
     # t is the true number of terms
     t = min(T, length(mi))
-    iszero(t) && return one(Rx)
+    iszero(t) && return zero(Rx)
     coeffs = solve_transposed_vandermonde(Rz, view(mi, 1:t), view(ys, 1:t))
     Rx(coeffs, monoms)
 end

@@ -101,9 +101,9 @@ for m in models
     gens = Array{AbstractAlgebra.Generic.Frac{Nemo.fmpq_mpoly}, 1}(identifiable_functions_raw)
 
     ideal = ParamPunPam.generators_to_saturated_ideal(gens)
-    @show ideal
+    # @show ideal
     
-    gb = ParamPunPam.paramgb(ideal)
+    gb = ParamPunPam.paramgb(ideal, up_to_degree=(2, 2))
     @show parent(first(gb))
     @show gb
     @info "The coefficients are:"
