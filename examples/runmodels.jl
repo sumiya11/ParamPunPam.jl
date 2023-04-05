@@ -83,11 +83,33 @@ models = [
             y1(t) = S(t) + R(t),
             y2(t) = T
         )
+    ),
+    Dict(
+        :name => "QY",
+        :ode => @ODEmodel(
+            P0'(t) = P1(t),
+            P1'(t) = P2(t),
+            P2'(t) = P3(t),
+            P3'(t) = P4(t),
+            P4'(t) = -(Ks*M*siga1*siga2*P1(t)+(Ks*M*siga1+Ks*M*siga2+Ks*siga1*siga2+siga1*siga2*M)*P2(t)
+               +(Ks*M+Ks*siga1+Ks*siga2+M*siga1+M*siga2+siga1*siga2)*P3(t)+(Ks+M+siga1+siga2)*P4(t))
+           -(Mar*P5(t)+ beta+ beta_SA/(siga2*M)*(P3(t)+P2(t)*(Ks+M+Mar)+P1(t)*(Ks*M+Ks*Mar+M*Mar)
+           +P0(t)*Ks*M*Mar) + beta_SI/M*(P2(t)+P1(t)*(Ks+Mar)+P0(t)*Ks*Mar)
+           +beta_SA*phi/( (1-phi)*siga2*M)*(P3(t)+P2(t)*(Ks+M+siga2)+P1(t)*(Ks*M+Ks*siga2+M*siga2)
+                   +P0(t)*Ks*M*siga2) )
+            *(alpa+Ks*M*siga1*siga2*P0(t)+(Ks*M*siga1+Ks*M*siga2+Ks*siga1*siga2+siga1*siga2*M)*P1(t)
+            +(Ks*M+Ks*siga1+Ks*siga2+M*siga1+M*siga2+siga1*siga2)*P2(t)+(Ks+M+siga1+siga2)*P3(t)+P4(t)),           
+            P5'(t) = -Mar*P5(t) - (beta+ beta_SA/(siga2*M)*(P3(t)+P2(t)*(Ks+M+Mar)+P1(t)*(Ks*M+Ks*Mar+M*Mar)
+            +P0(t)*Ks*M*Mar) + beta_SI/M*(P2(t)+P1(t)*(Ks+Mar)+P0(t)*Ks*Mar)
+            +beta_SA*phi/( (1-phi)*siga2*M)*(P3(t)+P2(t)*(Ks+M+siga2)+P1(t)*(Ks*M+Ks*siga2+M*siga2)
+                    +P0(t)*Ks*M*siga2)),
+            y(t) = P0(t)
+        )
     )
 ]
 
 # if empty, runs all
-to_run = ["St"]
+to_run = ["QY"]
 
 for m in models
     if length(to_run) > 0 && !(m[:name] in to_run)
@@ -98,13 +120,14 @@ for m in models
     ioeqs = find_ioequations(ode)
     identifiable_functions_raw = extract_identifiable_functions_raw(collect(values(ioeqs)), ode.parameters)
 
-    gens = Array{AbstractAlgebra.Generic.Frac{Nemo.fmpq_mpoly}, 1}(identifiable_functions_raw)
+    field_gens = Array{AbstractAlgebra.Generic.Frac{Nemo.fmpq_mpoly}, 1}(identifiable_functions_raw)
 
-    ideal = ParamPunPam.generators_to_saturated_ideal(gens)
+    ideal = ParamPunPam.generators_to_saturated_ideal(field_gens)
     # @show ideal
     
-    gb = ParamPunPam.paramgb(ideal, up_to_degree=(2, 2))
-    @show parent(first(gb))
+    #gb = ParamPunPam.paramgb(ideal)
+    gb = ParamPunPam.paramgb(ideal, up_to_degree=(4, 3))
+    @show gens(base_ring(base_ring(parent(first(gb)))))
     @show gb
     @info "The coefficients are:"
     for p in gb

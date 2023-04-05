@@ -121,7 +121,7 @@ function saturate(I, Q)
     R = parent(I[1])
     base = base_ring(R)
     strings = map(String, symbols(R))
-    parentring, vs = Nemo.PolynomialRing(base, [strings..., "t"], ordering=:degrevlex)
+    parentring, vs = Nemo.PolynomialRing(base, ["t", strings...], ordering=:degrevlex)
 
     t = last(vs)
     # @info "" base I parentring
