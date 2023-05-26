@@ -1,7 +1,7 @@
 using Logging
 
 import AbstractAlgebra
-using Nemo
+import Nemo
 
 using StructuralIdentifiability
 using StructuralIdentifiability: extract_identifiable_functions_raw
@@ -109,7 +109,9 @@ models = [
 ]
 
 # if empty, runs all
-to_run = ["QY"]
+to_run = ["Simple compartment", "Goodwin", "SIRS forced", "HIV", "SLIQR", "St"]
+ideals = Dict()
+COMPUTE = false
 
 for m in models
     if length(to_run) > 0 && !(m[:name] in to_run)
@@ -124,13 +126,15 @@ for m in models
 
     ideal = ParamPunPam.generators_to_saturated_ideal(field_gens)
     # @show ideal
-    
-    #gb = ParamPunPam.paramgb(ideal)
-    gb = ParamPunPam.paramgb(ideal, up_to_degree=(4, 3))
-    @show gens(base_ring(base_ring(parent(first(gb)))))
-    @show gb
-    @info "The coefficients are:"
-    for p in gb
-        @info collect(coefficients(p))
-    end 
+    ideals[m[:name]] = ideal
+
+    if COMPUTE
+        gb = ParamPunPam.paramgb(ideal, up_to_degree=(3, 3))
+        @show AbstractAlgebra.gens(AbstractAlgebra.base_ring(AbstractAlgebra.base_ring(parent(first(gb)))))
+        @show gb
+        @info "The coefficients are:"
+        for p in gb
+            @info collect(AbstractAlgebra.coefficients(p))
+        end
+    end
 end
