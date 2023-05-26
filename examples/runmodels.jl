@@ -109,7 +109,7 @@ models = [
 ]
 
 # if empty, runs all
-to_run = ["Simple compartment", "Goodwin", "SIRS forced", "HIV", "SLIQR", "St"]
+to_run = ["Simple compartment", "Goodwin", "SIRS forced", "HIV", "SLIQR", "St", "QY"]
 ideals = Dict()
 COMPUTE = false
 
