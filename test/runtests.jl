@@ -4,7 +4,7 @@ using TestSetExtensions
 import AbstractAlgebra
 using Nemo
 
-include("../src/ParamPunPam.jl")
+using ParamPunPam
 
 @testset "All tests" verbose=true begin
     @includetests ["gb"]

@@ -1,8 +1,26 @@
 name = "ParamPunPam"
 uuid = "3e851597-e36f-45a9-af0a-b7781937992f"
+authors = ["sumiya11", "pogudingleb"]
+version = "0.0.0"
 
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
 Groebner = "0b43b601-686d-58a3-8a1c-6623616c7cd4"
 Nemo = "2edaba10-b0f1-5616-af89-8c11ac63239a"
 Primes = "27ebfcd6-29c5-5fa9-bf4b-fb8fc14df3ae"
+
+[compat]
+AbstractAlgebra = "0.27, 0.28, 0.29, 0.30"
+Groebner = "0.3"
+Nemo = "0.32"
+Primes = "0.5"
+TestSetExtensions = "2"
+julia = "1.6"
+
+[extras]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
+
+[targets]
+test = ["BenchmarkTools", "Test", "TestSetExtensions"]

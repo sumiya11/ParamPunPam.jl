@@ -1,22 +1,23 @@
 ### ParamPunPam.jl - parametric Groebner bases.
 
-### What?
+### What is it?
 
-Groebner bases over $\mathbb{Q}(a)[x]$, where $a$ are treated as transcendental numbers.
+Groebner bases in $\mathbb{Q}(\mathbf{a})[\mathbf{x}]$, where $\mathbf{a}$ are treated as transcendental numbers.
 
-You can install `ParamPunPam.jl` with the following command in Julia
+`ParamPunPam.jl` is primarily designed to work in cases where the coefficients of the output basis are sparse.
+
+You can install `ParamPunPam.jl` with the following command in Julia:
 
 ```julia
 import Pkg; Pkg.add(url="https://github.com/sumiya11/ParamPunPam.jl")
 ```
 
-### How?
+### How to use it?
 
 See the following example:
 
 ```julia
-using ParamPunPam
-using Nemo
+using ParamPunPam, Nemo
 
 Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
 R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
@@ -66,7 +67,3 @@ ParamPunPam.paramgb(F)
  x + (-a - 1)//b*z
  z^2 + b//(a + 1)*z + b^2//(a + 1)
 ```
-
-### Why?
-
-//\\
