@@ -61,7 +61,7 @@ mutable struct ComputationGraph{Poly}
 end
 
 nnodes(graph) = length(graph.polys)
-nedges(graph) = sum(length, graph.adjlist)
+nedges(graph) = sum(length, values(graph.adjlist))
 function add_edge!(graph, ij; meta=nothing)
     i, j = ij
     !haskey(graph.adjlist, i) && (graph.adjlist[i] = Int[])
@@ -159,13 +159,13 @@ function apply!(graph, polys)
     basis = copy(polys)
     @info "Input: $m polynomials, Desired basis: $n polynomials"
     @info "Unwinding the computation graph.."
-    metadata = deepcopy(graph.metadata[i, j])
+    metadata = deepcopy(graph.metadata)
     for i in m+1:n
         @info "Constructing element $i"
         # Construct the new polynomial from the polynomials basis[1:i-1]
         f = zero(R)
         for j in graph.adjlist[i]
-            meta = pop!(metadata)
+            meta = pop!(metadata[i, j])
             if first(meta) === :spoly
                 _, k, l = meta
                 f = spolynomial(basis[k], basis[l])
