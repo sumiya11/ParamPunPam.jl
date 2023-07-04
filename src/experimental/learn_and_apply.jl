@@ -159,12 +159,13 @@ function apply!(graph, polys)
     basis = copy(polys)
     @info "Input: $m polynomials, Desired basis: $n polynomials"
     @info "Unwinding the computation graph.."
+    metadata = deepcopy(graph.metadata[i, j])
     for i in m+1:n
         @info "Constructing element $i"
         # Construct the new polynomial from the polynomials basis[1:i-1]
         f = zero(R)
         for j in graph.adjlist[i]
-            meta = pop!(graph.metadata[i, j])
+            meta = pop!(metadata)
             if first(meta) === :spoly
                 _, k, l = meta
                 f = spolynomial(basis[k], basis[l])
