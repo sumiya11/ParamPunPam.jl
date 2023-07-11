@@ -28,6 +28,5 @@ include("groebner/modulartracker.jl")
 include("groebner/paramgb.jl")
 
 export paramgb
-export CuytLee, VanDerHoevenLecerf
 
 end

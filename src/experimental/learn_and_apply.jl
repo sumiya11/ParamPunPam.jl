@@ -61,13 +61,19 @@ mutable struct ComputationGraph{Poly}
 end
 
 nnodes(graph) = length(graph.polys)
-nedges(graph) = sum(length, graph.adjlist)
+nedges(graph) = sum(length, values(graph.adjlist))
 function add_edge!(graph, ij; meta=nothing)
     i, j = ij
     !haskey(graph.adjlist, i) && (graph.adjlist[i] = Int[])
     push!(graph.adjlist[i], j)
     !haskey(graph.metadata, ij) && (graph.metadata[ij] = [])
     push!(graph.metadata[ij], meta)
+end
+function clean!(graph)
+    for (k, v) in graph.adjlist
+        graph.adjlist[k] = append!([graph.adjlist[k][1]], unique(graph.adjlist[k][2:end]))
+    end
+    nothing    
 end
 
 function spolynomial(f, g)
@@ -111,9 +117,23 @@ end
 
 function update!(critical_pairs, basis, j)
     for i in 1:j-1
-        # buchberger_criterion(basis, critical_pairs, i, j) && continue
         push!(critical_pairs, (i, j))
+        if buchberger_criterion(basis, critical_pairs, i, j)
+            critical_pairs[end] = (0, 0)
+        end
     end
+    # test existing pairs for redundancy
+    n = length(critical_pairs) - (j - 1)
+    for i in 1:n
+        k, l = critical_pairs[i]
+        critical_pairs[n + k] == (0, 0) && continue
+        critical_pairs[n + l] == (0, 0) && continue
+        m = max(lcm_deg(critical_pairs[n + k]..., basis), lcm_deg(critical_pairs[n + l]..., basis))
+        if lcm_deg(k, l, basis) > m && first(divides(lcm(basis[k], basis[l]), leading_monomial(basis[j])))
+            critical_pairs[i] = (0, 0)
+        end
+    end
+    filter!(x -> !(x == (0, 0)), critical_pairs)
     nothing
 end
 
@@ -134,10 +154,12 @@ function learn!(polys)
         update!(critical_pairs, basis, length(basis))
     end
     graph = ComputationGraph(basis)
+    d = 0
     while !isempty(critical_pairs)
         (i, j) = select_using_normal_strategy!(basis, critical_pairs)
-        # buchberger_criterion(basis, critical_pairs, i, j) && continue
-        # staircase_criterion(basis, critical_pairs, i, j) && continue
+        buchberger_criterion(basis, critical_pairs, i, j) && continue
+        staircase_criterion(basis, critical_pairs, i, j) && continue
+        (iszero(d % 10)) && (@info "Critical pair of degree $(lcm_deg(i, j, basis)), pairs left: $(length(critical_pairs))")
         spoly = spolynomial(basis[i], basis[j])
         nf, path = normalform(spoly, basis)
         iszero(nf) && continue
@@ -147,11 +169,14 @@ function learn!(polys)
         for idx in path
             add_edge!(graph, (length(basis), idx), meta=(:reduction,))
         end
+        d += 1
     end
+    clean!(graph)
     @info "Learned a graph with $(nnodes(graph)) nodes and $(nedges(graph)) edges"
     basis, graph
 end
 
+# TODO: reduce lazily
 function apply!(graph, polys)
     R = parent(first(polys))
     m = length(polys)
@@ -159,12 +184,13 @@ function apply!(graph, polys)
     basis = copy(polys)
     @info "Input: $m polynomials, Desired basis: $n polynomials"
     @info "Unwinding the computation graph.."
+    metadata = deepcopy(graph.metadata)
     for i in m+1:n
         @info "Constructing element $i"
         # Construct the new polynomial from the polynomials basis[1:i-1]
         f = zero(R)
         for j in graph.adjlist[i]
-            meta = pop!(graph.metadata[i, j])
+            meta = pop!(metadata[i, j])
             if first(meta) === :spoly
                 _, k, l = meta
                 f = spolynomial(basis[k], basis[l])
@@ -203,12 +229,17 @@ end
 
 # Over QQ
 begin
-    F = Groebner.katsuran(5, ordering=:degrevlex, ground=Nemo.QQ)
+    F = Groebner.katsuran(6, ordering=:degrevlex, ground=Nemo.QQ)
     gb, graph = learn_and_apply(F)
     # The basis is correct! But the check fails when the basis is not autoreduced
     # @assert Groebner.isgroebner(gb)
     gb, graph
 end;
+
+begin
+    F = Groebner.katsuran(6, ordering=:degrevlex, ground=Nemo.GF(2^31-1))
+    @benchmark groebner($F)
+end
 
 # Over QQ(a...)
 begin
@@ -237,8 +268,26 @@ begin
     gb, graph = learn_and_apply(F)
 end;
 
+# Too large..
+# using StructuralIdentifiability
+# begin
+#     goodwin = @ODEmodel(
+#         x1'(t) = -b * x1(t) + 1 / (c + x4(t)),
+#         x2'(t) = alpha * x1(t) - beta * x2(t),
+#         x3'(t) = gama * x2(t) - delta * x3(t),
+#         x4'(t) = sigma * x4(t) * (gama * x2(t) - delta * x3(t)) / x3(t),
+#         y(t) = x1(t)
+#     )
+
+#     gens = StructuralIdentifiability.ideal_generators(goodwin)
+#     # gb, graph = learn_and_apply(gens);
+
+#     # @time apply!(graph, gens)
+# end;
+
 # Some plotting
 begin
+    return 0  # comment this line if you wish to plot!
     using Plots
     using GraphRecipes
     @show graph.adjlist
