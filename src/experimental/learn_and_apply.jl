@@ -19,8 +19,16 @@ function learn_and_apply(polys)
     @info "Learn phase"
     if !iszero(characteristic(R))
         # Over Z_p, just compute the graph
-        @info "Z_p path"
-        basis_mod_p, graph = learn!(polys)
+        if base_ring(R) isa Nemo.FracField
+            K = base_ring(base_ring(base_ring(R)))
+            @info "Z_p(a...) path"
+            point = map(K, Primes.nextprimes(17, nvars(base_ring(base_ring(R)))))
+            polys_spec = map(f -> specialize(f, point), polys)
+            basis_mod_p, graph = learn!(polys_spec)
+        else
+            @info "Z_p path"
+            basis_mod_p, graph = learn!(polys)
+        end
     elseif base_ring(R) in [Nemo.QQ, AbstractAlgebra.QQ]
         # Over QQ, reduce modulo p, and compute the graph
         @info "QQ path"
@@ -118,22 +126,22 @@ end
 function update!(critical_pairs, basis, j)
     for i in 1:j-1
         push!(critical_pairs, (i, j))
-        if buchberger_criterion(basis, critical_pairs, i, j)
-            critical_pairs[end] = (0, 0)
-        end
+        # if buchberger_criterion(basis, critical_pairs, i, j)
+        #     critical_pairs[end] = (0, 0)
+        # end
     end
-    # test existing pairs for redundancy
-    n = length(critical_pairs) - (j - 1)
-    for i in 1:n
-        k, l = critical_pairs[i]
-        critical_pairs[n + k] == (0, 0) && continue
-        critical_pairs[n + l] == (0, 0) && continue
-        m = max(lcm_deg(critical_pairs[n + k]..., basis), lcm_deg(critical_pairs[n + l]..., basis))
-        if lcm_deg(k, l, basis) > m && first(divides(lcm(basis[k], basis[l]), leading_monomial(basis[j])))
-            critical_pairs[i] = (0, 0)
-        end
-    end
-    filter!(x -> !(x == (0, 0)), critical_pairs)
+    # # test existing pairs for redundancy
+    # n = length(critical_pairs) - (j - 1)
+    # for i in 1:n
+    #     k, l = critical_pairs[i]
+    #     critical_pairs[n + k] == (0, 0) && continue
+    #     critical_pairs[n + l] == (0, 0) && continue
+    #     # m = max(lcm_deg(critical_pairs[n + k]..., basis), lcm_deg(critical_pairs[n + l]..., basis))
+    #     # if lcm_deg(k, l, basis) > m && first(divides(lcm(basis[k], basis[l]), leading_monomial(basis[j])))
+    #     #     critical_pairs[i] = (0, 0)
+    #     # end
+    # end
+    # filter!(x -> !(x == (0, 0)), critical_pairs)
     nothing
 end
 
@@ -158,7 +166,7 @@ function learn!(polys)
     while !isempty(critical_pairs)
         (i, j) = select_using_normal_strategy!(basis, critical_pairs)
         buchberger_criterion(basis, critical_pairs, i, j) && continue
-        staircase_criterion(basis, critical_pairs, i, j) && continue
+        # staircase_criterion(basis, critical_pairs, i, j) && continue
         (iszero(d % 10)) && (@info "Critical pair of degree $(lcm_deg(i, j, basis)), pairs left: $(length(critical_pairs))")
         spoly = spolynomial(basis[i], basis[j])
         nf, path = normalform(spoly, basis)
@@ -204,6 +212,20 @@ function apply!(graph, polys)
         end
         push!(basis, f)
     end
+    @label Letsgo
+    filter!(!iszero, basis)
+    sort!(basis, by=leading_monomial)
+    updated = false
+    for i in 2:length(basis)
+        iszero(basis[i]) && continue
+        for j in 1:i-1
+            iszero(basis[j]) && continue
+            q, r = divrem(basis[i], basis[j])
+            basis[i] = r
+            updated = updated || !iszero(q)
+        end
+    end
+    updated && @goto Letsgo 
     basis, graph
 end
 
@@ -227,19 +249,19 @@ begin
     @assert isgroebner(gb)
 end
 
-# Over QQ
-begin
-    F = Groebner.katsuran(6, ordering=:degrevlex, ground=Nemo.QQ)
-    gb, graph = learn_and_apply(F)
-    # The basis is correct! But the check fails when the basis is not autoreduced
-    # @assert Groebner.isgroebner(gb)
-    gb, graph
-end;
+# # Over QQ
+# begin
+#     F = Groebner.katsuran(6, ordering=:degrevlex, ground=Nemo.QQ)
+#     gb, graph = learn_and_apply(F)
+#     # The basis is correct! But the check fails when the basis is not autoreduced
+#     # @assert Groebner.isgroebner(gb)
+#     gb, graph
+# end;
 
-begin
-    F = Groebner.katsuran(6, ordering=:degrevlex, ground=Nemo.GF(2^31-1))
-    @benchmark groebner($F)
-end
+# begin
+#     F = Groebner.katsuran(6, ordering=:degrevlex, ground=Nemo.GF(2^31-1))
+#     # @benchmark groebner($F)
+# end
 
 # Over QQ(a...)
 begin
@@ -251,22 +273,45 @@ begin
         x * z + z + b
     ]
     gb, graph = learn_and_apply(F)
+
+    Rparam, (a, b) = PolynomialRing(Nemo.GF(2^31-1), ["a", "b"])
+    R, (x, y, z) = PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
+    F = [
+        x^2 + x + (a + 1)^5,
+        x * y + b * y * z + 1 // (a * b)^12,
+        x * z + z + b
+    ]
+    gb, graph = learn_and_apply(F)
     # also correct
 end;
 
 # Interpolation approach fails here, as the degrees of parameters approach 15-20.
+# begin
+#     Rparam, a = PolynomialRing(Nemo.QQ, ["a$i" for i in 1:5])
+#     R, x = PolynomialRing(Nemo.FractionField(Rparam), ["x$i" for i in 1:5], ordering=:degrevlex)
+#     F = [
+#         x[1]^2 + x[2] + (a[1] + a[2]),
+#         (a[3] * a[4] + 1) * x[1] * x[2] + a[2] * x[2] * x[3] + 1 // (a[1] * a[2])^2,
+#         (a[1] * a[2] * a[3]) * x[1] * x[3] + x[3] + a[2],
+#         x[3] * x[4]^2 + x[2] * x[4] + a[5],
+#         x[4] * x[5]^2 + x[5] + a[1],
+#     ]
+#     # gb, graph = learn_and_apply(F)
+# end;
+
 begin
-    Rparam, a = PolynomialRing(Nemo.QQ, ["a$i" for i in 1:5])
-    R, x = PolynomialRing(Nemo.FractionField(Rparam), ["x$i" for i in 1:5], ordering=:degrevlex)
-    F = [
-        x[1]^2 + x[2] + (a[1] + a[2]),
-        (a[3] * a[4] + 1) * x[1] * x[2] + a[2] * x[2] * x[3] + 1 // (a[1] * a[2])^2,
-        (a[1] * a[2] * a[3]) * x[1] * x[3] + x[3] + a[2],
-        x[3] * x[4]^2 + x[2] * x[4] + a[5],
-        x[4] * x[5]^2 + x[5] + a[1],
-    ]
-    gb, graph = learn_and_apply(F)
-end;
+    Ra, (beta, gamma, v, psi) = PolynomialRing(Nemo.GF(2^31-1), ["beta", "gamma", "v", "psi"])
+    R, (t, y1, y2, y3, y4) = PolynomialRing(Nemo.FractionField(Ra), ["t", "y1","y2","y3","y4"],ordering=:degrevlex)
+    
+    SEIR_1_io = [(-beta*gamma*psi + 2*beta*gamma + beta*v + beta*psi)*y2^3*y4^2 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y4^2 + (gamma^3*psi^2 - gamma^3*psi - gamma^2*v*psi - gamma^2*psi^2)*y1*y2*y4 + (-2*gamma^3*psi^2 + 2*gamma^3*psi + 2*gamma^2*v*psi + 2*gamma^2*psi^2)*y1*y2 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y3 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y4, (-2*beta*gamma*psi + 4*beta*gamma + 2*beta*v + 2*beta*psi)*y2^3*y4^2 + (2*gamma^2*psi^2 - 2*gamma^2*psi - 2*gamma*v*psi - 2*gamma*psi^2)*y1*y2^2*y4 + (2*beta*gamma*psi - 4*beta*gamma - 2*beta*v - 2*beta*psi)*y2^3*y4 + (2*beta*gamma*psi - 4*beta*gamma - 2*beta*v - 2*beta*psi)*y2^2*y3*y4 + (2*beta*gamma*psi - 4*beta*gamma - 2*beta*v - 2*beta*psi)*y2^2*y4^2 + (-4*gamma^2*psi^2 + 4*gamma^2*psi + 4*gamma*v*psi + 4*gamma*psi^2)*y1*y2^2 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2*y3 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2*y4, 0, y2^3*y4^2 - y2^3*y4 - y2^2*y3*y4 - y2^2*y4^2 + (-gamma^3*psi + gamma^3 + gamma^2*v + gamma^2*psi)*y4, -y2^3*y4^2 + y2^3*y4 + y2^2*y3*y4 + y2^2*y4^2 + (gamma^3*psi - gamma^3 - gamma^2*v - gamma^2*psi)*y4, beta*y2^3*y4^2 - beta*y2^3*y4 - beta*y2^2*y3*y4 - beta*y2^2*y4^2 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^2, y2^3*y4^2 - y2^3*y4 - y2^2*y3*y4 - y2^2*y4^2 + (-gamma^2*psi + gamma^2 + gamma*v + gamma*psi)*y2*y4, -y2^3*y4^2 + y2^3*y4 + y2^2*y3*y4 + y2^2*y4^2 + gamma^2*y2*y4^2 - 
+    gamma^2*y2*y4 - gamma^2*y3*y4 - gamma^2*y4^2, (gamma*psi^2 - gamma*psi - v*psi - psi^2)*y1*y2^3*y4 + (-beta*gamma*psi + 2*beta*gamma + beta*v + beta*psi)*y2^3*y4^2 + (-2*gamma*psi^2 + 2*gamma*psi + 2*v*psi + 2*psi^2)*y1*y2^3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^2*y3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^2*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y4^2, (2*gamma^2*psi^2 - 2*gamma^2*psi - 2*gamma*v*psi - 2*gamma*psi^2)*y1*y2^3*y4 + (3*gamma^2*psi^2 - 3*gamma^2*psi - 3*gamma*v*psi - 3*gamma*psi^2)*y1*y2^2*y3*y4 + (-2*beta*gamma^2*psi + 2*beta*gamma^2 - 3*beta*gamma*v*psi + 5*beta*gamma*v + 2*beta*gamma*psi + 3*beta*v*psi)*y2^3*y4^2 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2^3 + (-5*gamma^2*psi^2 + 5*gamma^2*psi + 5*gamma*v*psi + 5*gamma*psi^2)*y1*y2^2*y3 + (-2*gamma^2*psi^2 + 
+    2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2^2*y4 + (2*beta*gamma^2*psi - 2*beta*gamma^2 + 3*beta*gamma*v*psi - 5*beta*gamma*v - 2*beta*gamma*psi - 3*beta*v*psi)*y2^3*y4 + 
+    (-3*gamma^2*psi^2 + 3*gamma^2*psi + 3*gamma*v*psi + 3*gamma*psi^2)*y1*y2*y3*y4 + (2*beta*gamma^2*psi - 2*beta*gamma^2 + 3*beta*gamma*v*psi - 5*beta*gamma*v - 2*beta*gamma*psi - 3*beta*v*psi)*y2^2*y3*y4 + (2*beta*gamma^2*psi - 2*beta*gamma^2 + 3*beta*gamma*v*psi - 5*beta*gamma*v - 2*beta*gamma*psi - 3*beta*v*psi)*y2^2*y4^2, (-gamma*psi + 2*gamma + v + psi)*y2^3*y4^2 + (gamma*psi - 2*gamma - v - psi)*y2^3*y4 + (gamma*psi - 2*gamma - v - psi)*y2^2*y3*y4 + (gamma^2*psi - gamma^2 - gamma*v - 2*gamma - v - psi)*y2^2*y4^2 + (-2*gamma^2*psi + 2*gamma^2 + 2*gamma*v + 2*gamma*psi)*y2^2*y4 + (-gamma^2*psi + gamma^2 + gamma*v + gamma*psi)*y2*y3*y4 + (-gamma^2*psi + gamma^2 + gamma*v + gamma*psi)*y2*y4^2, (gamma*psi^2 - gamma*psi - v*psi - psi^2)*y1*y2^4*y3*y4 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^4*y3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^3*y3*y4 + (-beta*gamma^2*v*psi + beta*gamma^2*v + beta*gamma*v*psi)*y2^3*y4^2 + (beta*gamma^2*v*psi - beta*gamma^2*v - beta*gamma*v*psi)*y2^3*y4 + (beta*gamma^2*v*psi - beta*gamma^2*v - beta*gamma*v*psi)*y2^2*y3*y4 + (beta*gamma^2*v*psi - beta*gamma^2*v - beta*gamma*v*psi)*y2^2*y4^2, (gamma*psi - 2*gamma - v - psi)*y2^3*y4^2 + (-gamma*psi + 2*gamma + v + psi)*y2^3*y4 + (-gamma*psi + 2*gamma + v + psi)*y2^2*y3*y4 + (-gamma^2*psi + gamma^2 + gamma*v + 2*gamma + v + psi)*y2^2*y4^2 + 
+    (2*gamma^2*psi - 2*gamma^2 - 2*gamma*v - 2*gamma*psi)*y2^2*y4 + (gamma^2*psi - gamma^2 - gamma*v - gamma*psi)*y2*y3*y4 + (gamma^2*psi - gamma^2 - gamma*v - gamma*psi)*y2*y4^2, (gamma*psi - 2*gamma - v - psi)*y2^3*y4^2 + (-gamma*psi + 2*gamma + v + psi)*y2^3*y4 + (-gamma*psi + 2*gamma + v + psi)*y2^2*y3*y4 + (-gamma*psi + 2*gamma + v + psi)*y2^2*y4^2 + (-gamma^3*psi + gamma^3 + gamma^2*v + gamma^2*psi)*y2*y4^2 + (2*gamma^3*psi - 2*gamma^3 - 2*gamma^2*v - 2*gamma^2*psi)*y2*y4 + (gamma^3*psi - gamma^3 - gamma^2*v - gamma^2*psi)*y3*y4 + (gamma^3*psi - gamma^3 - gamma^2*v - gamma^2*psi)*y4^2, (-beta*gamma^2*psi + beta*gamma^2 - beta*gamma*v*psi + 2*beta*gamma*v + beta*gamma*psi + beta*v*psi)*y2^3*y4^2 + (gamma^3*psi^2 - gamma^3*psi - gamma^2*v*psi - gamma^2*psi^2)*y1*y2^2*y4 + (beta*gamma^2*psi - beta*gamma^2 + beta*gamma*v*psi - 2*beta*gamma*v - beta*gamma*psi - beta*v*psi)*y2^3*y4 + (gamma^3*psi^2 - gamma^3*psi - gamma^2*v*psi - gamma^2*psi^2)*y1*y2*y3*y4 + (beta*gamma^2*psi - beta*gamma^2 + beta*gamma*v*psi - 2*beta*gamma*v - beta*gamma*psi - beta*v*psi)*y2^2*y3*y4 + (beta*gamma^2*psi - beta*gamma^2 + beta*gamma*v*psi - 2*beta*gamma*v - beta*gamma*psi - 
+    beta*v*psi)*y2^2*y4^2 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y2^2 + (-2*gamma^3*psi^2 + 2*gamma^3*psi + 2*gamma^2*v*psi + 2*gamma^2*psi^2)*y1*y2*y3 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y2*y4 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y3*y4, beta*y2^3*y4^2 - beta*y2^3*y4 - beta*y2^2*y3*y4 - beta*y2^2*y4^2 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1, (gamma*psi^2 - gamma*psi - v*psi - psi^2)*y1*y2^4*y4 + (3*gamma*psi^2 - 3*gamma*psi - 3*v*psi - 3*psi^2)*y1*y2^3*y3*y4 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^4 + (-4*gamma*psi^2 + 4*gamma*psi + 4*v*psi + 4*psi^2)*y1*y2^3*y3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^3*y4 + (-3*gamma*psi^2 + 3*gamma*psi + 3*v*psi + 3*psi^2)*y1*y2^2*y3*y4 + (-beta*gamma^2*psi + beta*gamma^2 - 3*beta*gamma*v*psi + 4*beta*gamma*v + beta*gamma*psi + 3*beta*v*psi)*y2^3*y4^2 + (beta*gamma^2*psi - beta*gamma^2 + 3*beta*gamma*v*psi - 4*beta*gamma*v - beta*gamma*psi - 3*beta*v*psi)*y2^3*y4 + (beta*gamma^2*psi - beta*gamma^2 + 3*beta*gamma*v*psi - 4*beta*gamma*v - beta*gamma*psi - 3*beta*v*psi)*y2^2*y3*y4 + (beta*gamma^2*psi - beta*gamma^2 + 3*beta*gamma*v*psi - 4*beta*gamma*v - beta*gamma*psi - 3*beta*v*psi)*y2^2*y4^2, 2*beta*y2^3*y4^2 - 2*beta*y2^3*y4 - 2*beta*y2^2*y3*y4 - 2*beta*y2^2*y4^2 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2, y2^4*y4^2 - y2^4*y4 - y2^3*y3*y4 + (-gamma - 1)*y2^3*y4^2 + gamma*y2^3*y4 + gamma*y2^2*y3*y4 + gamma*y2^2*y4^2, -t*y2^3*y4^2 + t*y2^3*y4 + t*y2^2*y3*y4 + t*y2^2*y4^2 + 1]
+    
+    gb, graph = learn_and_apply(SEIR_1_io)
+end
 
 # Too large..
 # using StructuralIdentifiability
@@ -285,21 +330,21 @@ end;
 #     # @time apply!(graph, gens)
 # end;
 
-# Some plotting
-begin
-    return 0  # comment this line if you wish to plot!
-    using Plots
-    using GraphRecipes
-    @show graph.adjlist
-    default(size=(1000, 1000))
-    n = maximum(map(maximum, collect(values(graph.adjlist))))
-    adjlist = [get(graph.adjlist, k, Int[]) for k in 1:n]
-    graphplot(
-        adjlist,
-        names="poly " .* string.(1:n),
-        curves=false,
-        nodeshape=:rect,
-        # self_edge_size=0.25, 
-        # method=:tree
-    )
-end
+# # Some plotting
+# begin
+#     return 0  # comment this line if you wish to plot!
+#     using Plots
+#     using GraphRecipes
+#     @show graph.adjlist
+#     default(size=(1000, 1000))
+#     n = maximum(map(maximum, collect(values(graph.adjlist))))
+#     adjlist = [get(graph.adjlist, k, Int[]) for k in 1:n]
+#     graphplot(
+#         adjlist,
+#         names="poly " .* string.(1:n),
+#         curves=false,
+#         nodeshape=:rect,
+#         # self_edge_size=0.25, 
+#         # method=:tree
+#     )
+# end

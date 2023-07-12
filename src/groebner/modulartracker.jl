@@ -6,8 +6,7 @@ mutable struct ModularTracker{F}
     primeproduct::BigInt
 
     function ModularTracker(blackbox)
-        ff = Nemo.GF(2^62 + 135)
-        # ff = Nemo.GF(2^31 - 1)
+        ff = Nemo.GF(2^62 + 169)
         new{typeof(ff)}(ff, BigInt(1))
     end
 end
