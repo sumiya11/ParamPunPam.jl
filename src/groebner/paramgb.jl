@@ -329,9 +329,9 @@ function check_shape(best, current)
         return false
     end
     # TODO: remove this check
-    if best != map(f -> collect(monomials(f)), current)
-        return false
-    end
+    # if best != map(f -> collect(monomials(f)), current)
+    #     return false
+    # end
     true
 end
 
