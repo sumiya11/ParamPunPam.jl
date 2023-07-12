@@ -2,6 +2,22 @@
 """
     paramgb(blackbox) -> basis
 
+## Example
+
+```jldoctest
+using ParamPunPam, Nemo
+
+Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
+R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
+
+F = [
+    x^2 + x + (a + 1),
+    x*y + b*y*z + 1//(a*b),
+    x*z + z + b
+]
+
+paramgb(BasicBlackboxIdeal(F))
+```
 
 """
 function paramgb(
@@ -236,7 +252,7 @@ function interpolate_param_exponents!(
                 __throw_unlucky_cancellation()
             end
             !check_shape(shape, basis) && @warn "Bad substitution!"
-            
+
             # TODO: to be removed
             # @assert basisshape(basis) == shape
 
@@ -310,6 +326,10 @@ function check_shape(best, current)
         return false
     end
     if map(length, best) != map(length, current)
+        return false
+    end
+    # TODO: remove this check
+    if best != map(f -> collect(monomials(f)), current)
         return false
     end
     true
