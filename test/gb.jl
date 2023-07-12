@@ -7,9 +7,10 @@ function test_paramgb(cases, answers; kwargs...)
         # catch e
         #     @warn "Exception: $e"
         #     rethrow(e)
-        # end
-        G = ParamPunPam.paramgb(case; kwargs...)
-        @warn "" case G kwargs
+        # en
+        blackbox = ParamPunPam.BasicBlackboxIdeal(case)
+        G = ParamPunPam.paramgb(blackbox; kwargs...)
+        @info "" case G kwargs
         if haskey(kwargs, :up_to_degree)
             continue
         end 
@@ -62,7 +63,7 @@ end
     ]
     test_paramgb(cases, answers)
 
-    Ra, (a,b,c) = PolynomialRing(QQ, ["a","b","c"])
+    Ra, (a,b,c) = PolynomialRing(Nemo.QQ, ["a","b","c"])
     Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:deglex)
     cases = [
         [x + (a + b + c)^3//(a*c*b)^2]

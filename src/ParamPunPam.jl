@@ -22,11 +22,13 @@ include("interpolation/faster-van-der-hoeven-lecerf.jl")
 include("interpolation/faster-cuyt-lee.jl")
 include("interpolation/interpolators.jl")
 
+include("groebner/blackbox.jl")
 include("groebner/groebnerstate.jl")
 include("groebner/reconstruct.jl")
 include("groebner/modulartracker.jl")
 include("groebner/paramgb.jl")
 
 export paramgb
+export AbstractBlackboxIdeal, BasicBlackboxIdeal
 
 end

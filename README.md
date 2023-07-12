@@ -26,15 +26,20 @@ F = [
     x^2 + x + (a + 1),
     x*y + b*y*z + 1//(a*b),
     x*z + z + b
-];
+]
 
-ParamPunPam.paramgb(F)
-[ Info: Given 3 functions in K(a, b)[x, y, z]
+ParamPunPam.paramgb(BasicBlackboxIdeal(F))
+[ Info: Constructing a BasicBlackboxIdeal from 3 input polynomials
+┌ Info: Computing parametric GB
+│   up_to_degree = (4611686018427387903, 4611686018427387903)
+│   rational_interpolator = ParamPunPam.VanDerHoevenLecerf() 
+└   polynomial_interpolator = :primes_benortiwari
+[ Info: Given 3 functions in Rational Field(a, b)[x, y, z]
 [ Info: Specializing at 1 + 2 random points to guess the basis shape..
 [ Info: Reducing modulo Galois field with characteristic 4611686018427388039..
 ┌ Info: The shape of the basis is: 3 polynomials with monomials
 │   state.shape =
-│    3-element Vector{Vector{fpMPolyRingElem}}:
+│    3-element Vector{Vector{gfp_mpoly}}:
 │     [y, z, 1]
 │     [x, z]
 └     [z^2, z, 1]
@@ -54,15 +59,16 @@ ParamPunPam.paramgb(F)
 ┌ Info: Interpolating for degrees:
 └ numerator 2, denominator 5
 [ Info: Using 18 points..
-[ Info: Success! 18 points used.
+[ Info: Using 36 points..
+[ Info: Using 72 points..
+[ Info: Success! 72 points used.
 ┌ Info: Output summary:
 │     Maximal interpolated degrees are: 2 for num. and 5 for den.
-│     Maximal number of interpolated terms are: 2 for num. and 3 for den.
-└     
+│     Maximal number of interpolated terms are: 2 for num. and 3 for den.        
+└ 
 [ Info: Recovering the coefficients..
 [ Info: Success! Used 1 prime in total :)
-
-3-element Vector{AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.Frac{QQMPolyRingElem}}}:
+3-element Vector{AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.Frac{fmpq_mpoly}}}:
  y + (-a - 1)//(a^2*b^2 + a*b^4 + a*b^2)*z - 1//(a^2*b + a*b^3 + a*b)
  x + (-a - 1)//b*z
  z^2 + b//(a + 1)*z + b^2//(a + 1)

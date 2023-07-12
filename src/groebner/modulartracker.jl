@@ -1,16 +1,14 @@
 
-mutable struct ModularTracker{T, F}
-    # this are needed
-    polys::Vector{T}
+mutable struct ModularTracker{F}
     # Current finite field
     ff::F
     # The product of all used prime numbers
     primeproduct::BigInt
 
-    function ModularTracker(polys::Vector{T}) where {T}
+    function ModularTracker(blackbox)
         ff = Nemo.GF(2^62 + 135)
         # ff = Nemo.GF(2^31 - 1)
-        new{T, typeof(ff)}(polys, ff, BigInt(1))
+        new{typeof(ff)}(ff, BigInt(1))
     end
 end
 

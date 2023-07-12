@@ -1,0 +1,82 @@
+
+"""
+    AbstractBlackboxIdeal
+
+Blackbox ideals in Q(x)[y] that can be evaluated at x modulo a prime.
+
+## Interface
+
+Subtypes of `AbstractBlackboxIdeal` must implement the following functions:
+
+- `length(<:AbstractBlackboxIdeal)`: the number of generators.
+- `base_ring(<:AbstractBlackboxIdeal)`: original ground field.
+- `base_ring_mod_p(<:AbstractBlackboxIdeal)`: current modular ground field.
+- `parent(<:AbstractBlackboxIdeal)`: original parent ring.
+- `parent_params(<:AbstractBlackboxIdeal)`: original coefficient parent ring.
+- `parent_mod_p(<:AbstractBlackboxIdeal)`: current modular parent ring.
+- `reduce_mod_p!(<:AbstractBlackboxIdeal, p)`: reduces the generators modulo
+  `p`.
+- `evaluate_mod_p(<:AbstractBlackboxIdeal, point)`: specializes the ideal at
+  `point` and returns the generators of a specialized ideal in Zp[y].
+"""
+abstract type AbstractBlackboxIdeal end
+
+mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
+    polys::Vector{PolyQQX}
+    polys_mod_p
+    
+    function BasicBlackboxIdeal(polys::Vector{T}) where {T}
+        @assert !isempty(polys)
+        polys = filter(!iszero, polys)
+        @info "Constructing a BasicBlackboxIdeal from $(length(polys)) input polynomials"
+        Rx = parent(polys[1])
+        Ra = base_ring(Rx)
+        if Ra isa Nemo.FracField
+            Ra = base_ring(Ra)
+            Rlifted, _ = PolynomialRing(Ra, map(string, gens(Rx)), ordering=Nemo.ordering(Rx))
+            polys = liftcoeffs(polys, Rlifted)
+        end
+        K = base_ring(Ra)
+        @assert K isa Nemo.FracField{Nemo.fmpz} "Only Nemo.QQ as a ground field is supported"
+        new{eltype(polys)}(polys, nothing)
+    end
+end
+
+AbstractAlgebra.base_ring(ideal::BasicBlackboxIdeal) = base_ring(base_ring(first(ideal.polys)))
+base_ring_mod_p(ideal::BasicBlackboxIdeal) = base_ring(base_ring(first(ideal.polys_mod_p)))
+AbstractAlgebra.parent(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys))
+parent_params(ideal::BasicBlackboxIdeal) = base_ring(parent(first(ideal.polys)))
+parent_mod_p(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys_mod_p))
+Base.length(ideal::BasicBlackboxIdeal) = length(ideal.polys)
+
+function reduce_mod_p!(ideal::BasicBlackboxIdeal, ff)
+    @info "Reducing modulo $(ff).."
+    ideal.polys_mod_p = map(
+        poly -> map_coefficients(
+            f -> map_coefficients(
+                c -> ff(c), 
+                f
+            ), 
+            poly
+        ), 
+        ideal.polys
+    )
+    nothing
+end
+
+function evaluate_mod_p(ideal::BasicBlackboxIdeal, point)
+    @assert base_ring_mod_p(ideal) == parent(first(point))
+    polys_mod_p = ideal.polys_mod_p
+    map(f -> map_coefficients(c -> evaluate(c, point), f), polys_mod_p)    
+end
+
+function liftcoeffs(polys, newring)
+    cfs = map(collect ∘ coefficients, polys)
+    cfs = map(c -> map(numerator, c .* lcm(map(denominator, c))), cfs)
+    newpolys = Vector{elem_type(newring)}(undef, length(polys))
+    for i in 1:length(newpolys)
+        G = lcm(map(denominator, collect(coefficients(polys[i]))))
+        newpolys[i] = map_coefficients(c -> numerator(c * G), polys[i])
+    end
+    newpolys
+end
