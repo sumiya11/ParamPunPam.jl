@@ -80,11 +80,11 @@ function discover_shape!(state, modular; η=2)
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:1 + η)
     polysspecmodp = map(point -> evaluate_mod_p(blackbox, point), randompoints)
-    graph, gb = groebner_learn(polysspecmodp[1])
+    graph, gb = groebner_learn(polysspecmodp[1], sweep=true)
     state.graph = graph
     bases = empty(polysspecmodp)
     for F in polysspecmodp
-        flag, gb = groebner_apply!(graph, F)
+        flag, gb = groebner_apply!(graph, F, sweep=true)
         if !flag
             __throw_unlucky_cancellation()
         end
@@ -150,7 +150,7 @@ function discover_param_degrees!(state, modular)
         for idx in J:npoints
             point = x_points[idx]
             Ip = evaluate_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(graph, Ip)
+            flag, basis = groebner_apply!(graph, Ip, sweep=true)
             if !flag
                 __throw_unlucky_cancellation()
             end
@@ -247,7 +247,7 @@ function interpolate_param_exponents!(
             point = x_points[idx]
             Ip = evaluate_mod_p(blackbox, point)
             
-            flag, basis = groebner_apply!(graph, Ip)
+            flag, basis = groebner_apply!(graph, Ip, sweep=true)
             if !flag
                 __throw_unlucky_cancellation()
             end
