@@ -8,6 +8,6 @@ using ParamPunPam
 
 @testset "All tests" verbose=true begin
     @includetests ["blackbox"]
-    @includetests ["gb"]
+    @includetests ["paramgb"]
     @includetests ["noon"]
 end

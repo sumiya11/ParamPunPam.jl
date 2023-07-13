@@ -21,6 +21,9 @@ Subtypes of `AbstractBlackboxIdeal` must implement the following functions:
 """
 abstract type AbstractBlackboxIdeal end
 
+@noinline __throw_unlucky_cancellation() =
+    throw(AssertionError("Unlucky cancellation of coefficients!"))
+
 mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
     polys::Vector{PolyQQX}
     polys_mod_p
@@ -67,6 +70,11 @@ end
 function evaluate_mod_p(ideal::BasicBlackboxIdeal, point)
     @assert base_ring_mod_p(ideal) == parent(first(point))
     polys_mod_p = ideal.polys_mod_p
+    for poly in polys_mod_p
+        if iszero(evaluate(leading_coefficient(poly), point))
+            __throw_unlucky_cancellation()
+        end
+    end
     map(f -> map_coefficients(c -> evaluate(c, point), f), polys_mod_p)    
 end
 

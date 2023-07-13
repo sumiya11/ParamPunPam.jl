@@ -66,10 +66,16 @@ end
     Ra, (a,b,c) = PolynomialRing(Nemo.QQ, ["a","b","c"])
     Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:deglex)
     cases = [
-        [x + (a + b + c)^3//(a*c*b)^2]
+        [x + (a + b + c)^3//(a*c*b)^2],
+        [x + a // b, y + b // a, z + (a + b) // c],
+        [z + (a + b + c)^8 // c, y + b // a, x + a // b],
+        [z + a^25 // c, y + b^25 // a, x + a // b]
     ]
     answers = [
-        [x + (a + b + c)^3//(a*c*b)^2]
+        [x + (a + b + c)^3//(a*c*b)^2],
+        [z + (a + b) // c, y + b // a, x + a // b],
+        [z + (a + b + c)^8 // c, y + b // a, x + a // b],
+        [z + a^25 // c, y + b^25 // a, x + a // b]
     ]
     test_paramgb(cases, answers)
 end
