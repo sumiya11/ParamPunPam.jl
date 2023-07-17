@@ -1,4 +1,8 @@
-# Ben-or and Tiwaris via Kronecker substitution
+# Ben-or and Tiwari via Kronecker substitution
+
+# If n, D are the number of variables and the total degree, respectively, and K
+# is the order of the ground field, then the interpolation succeeds when 
+#   D^n < K
 
 mutable struct KronBenOrTiwari{Ring}
     # multivariate polynomial ring
@@ -9,6 +13,9 @@ mutable struct KronBenOrTiwari{Ring}
     Ds::Vector{Int}
     # the vector of degrees used in Kronecker substitution
     Dsubs::Vector{BigInt}
+    function KronBenOrTiwari(ring, T, D)
+        KronBenOrTiwari(ring, T, repeat([D], nvars(ring)))
+    end
     function KronBenOrTiwari(ring::Ring, T::Integer, Ds::Vector{<:Integer}) where {Ring}
         @assert T >= 0
         @assert all(>=(0), Ds)
@@ -16,64 +23,53 @@ mutable struct KronBenOrTiwari{Ring}
         Dsubs = subsdegrees(Ds)
         K = base_ring(ring)
         @assert (order(K) - 1) > 2T
-        Dsubs[end] >= order(K) && @warn "In Kronecker substitution the field order might be too small" Dsubs order(K)
+        if Dsubs[end] >= order(K)
+            @warn "In Kronecker approach the field order might be too small" Dsubs order(K)
+        end
         new{Ring}(ring, T, Ds, Dsubs)
     end
 end
 
-# Returns [1, D1, D1D2, ..., D1...Dn] to be used
-# in Kronecker substitution.
+# Returns [1, D1, D1D2, ..., D1...Dn] to be used in Kronecker substitution.
 # (probably, adding 1 to each entry)
 function subsdegrees(Ds::Vector{<:Integer})
     ans = Vector{BigInt}(undef, length(Ds) + 1)
     ans[1] = one(BigInt)
     for i in 1:length(Ds)
-        ans[i+1] = ans[i]*(Ds[i] + 1)
+        ans[i + 1] = ans[i] * (Ds[i] + 1)
     end
     ans
 end
 
-subsbackward(fmbot::KronBenOrTiwari, monoms::Vector{I}) where {I} = map(m -> subsbackward(fmbot, m), monoms)
-function subsbackward(fmbot::KronBenOrTiwari, monom::I) where {I}
-    Dsubs = fmbot.Dsubs
+subsbackward(bot::KronBenOrTiwari, monoms::Vector{I}) where {I} =
+    map(m -> subsbackward(bot, m), monoms)
+function subsbackward(bot::KronBenOrTiwari, monom::I) where {I}
+    Dsubs = bot.Dsubs
     n = length(Dsubs) - 1
     ans = Vector{Int}(undef, n)
     for i in n:-1:1
         ans[i] = div(monom, Dsubs[i])
-        monom = monom - ans[i]*Dsubs[i]
+        monom = monom - ans[i] * Dsubs[i]
     end
     ans
 end
 
-function startingpoint(fmbot::KronBenOrTiwari)
+function startingpoint(bot::KronBenOrTiwari)
     # Do Kronecker substitution
-    Dsubs = fmbot.Dsubs
-    K = base_ring(fmbot.ring)
+    Dsubs = bot.Dsubs
+    K = base_ring(bot.ring)
     g = randomgenerator(K)
-    map(i -> g^Dsubs[i], 1:length(Dsubs)-1)
+    map(i -> g^Dsubs[i], 1:(length(Dsubs) - 1))
 end
 
-function interpolate!(fbot::KronBenOrTiwari, blackbox)
-    T = fbot.T
-    # the base of the geometric sequence ω^1, ω^2, ...
-    ω = startingpoint(fbot)
-    # generate the sequence
-    # O(TlogT)
-    ωs = map(i -> ω .^ i, 0:2T-1)
-    # evaluate the blackbox function at the sequence
-    # O(LT), where L is the cost of evaluating the blackbox function
-    ys = map(blackbox, ωs)
-    interpolate!(fbot, ωs, ys)
-end
-
-function interpolate!(fbot::KronBenOrTiwari, xs, ys)
+function interpolate!(bot::KronBenOrTiwari, xs, ys)
     # check that the first degree is 0
     @assert all(isone, xs[1])
-    @assert length(xs) == length(ys) == 2*fbot.T
+    @assert length(xs) == length(ys) == 2 * bot.T
     ω = xs[2]
-    Rx = fbot.ring
+    Rx = bot.ring
     K = base_ring(Rx)
-    T = fbot.T
+    T = bot.T
     # construct the polynomial ys[1]z^1 + ys[2]z^2 + ... + ys[2T]z^(2T)
     # O(1)
     Rz, z = K["z"]
@@ -81,25 +77,20 @@ function interpolate!(fbot::KronBenOrTiwari, xs, ys)
     # find A/B such that A/B = sequence mod z^(2T) and degree(A) < T
     # O(M(T)logT)
     _, B, _ = Padé(sequence, z^(2T), T - 1)
-    # @info "" ω B
-    # @assert degree(B) == T
     # assuming this is O(T logT^k logq^m) for some k and m, 
     # where q is the order of the base field
     mi = map(inv, roots(B))
-    # @assert length(mi) == T
-    # @info "" mi
     # find the monomials of the interpolant,
     # O(TlogTlogq), where q is the order of the base field
     # (note that this cost covers the case where K is not a prime field)
     # (assuming ord is smooth)
     buf = DiscreteLogBuffers(PrecomputedField(K))
     monoms = map(m -> discrete_log(ω[1], m, buf), mi)
-    # @info "" monoms
     # find the coefficients of the interpolant
     # by solving a T×T Vandermonde system
     # O(M(T)logT).
     # t is the true number of terms
     t = min(T, length(mi))
     coeffs = solve_transposed_vandermonde(Rz, view(mi, 1:t), view(ys, 1:t))
-    Rx(coeffs, subsbackward(fbot, monoms))
+    Rx(coeffs, subsbackward(bot, monoms))
 end

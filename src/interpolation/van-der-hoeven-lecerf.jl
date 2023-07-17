@@ -1,9 +1,9 @@
 
-# Faster implementation of van-der-Hoeven & Lecers rational interpolation.
+# van-der-Hoeven & Lecerf rational multivariate interpolation.
 #
 # Needs to know the total degrees, partial degrees, and the number of terms
 # of numerator and denominator of the interpolant.
-mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
+mutable struct VanDerHoevenLecerf{Ring,UnivRing}
     # multivariate polynomial ring
     ring::Ring
     # the total degrees of the numerator/denominator
@@ -16,7 +16,7 @@ mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
     Nt::Int
     Dt::Int
     # dense interpolator for univariate functions
-    cauchy::FasterCauchy{UnivRing}
+    cauchy::CauchyInterpolator{UnivRing}
     # polynomial interpolators for the numerator/denominator
     Ni::PrimesBenOrTiwari{Ring}
     Di::PrimesBenOrTiwari{Ring}
@@ -32,21 +32,7 @@ mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
 
     J
 
-    # Construct an FasterVanDerHoevenLecerf object from the
-    # collected info of the interpolant' degrees/terms 
-    function FasterVanDerHoevenLecerf(
-        ring::Ring,
-        boundsinfo::NamedTuple
-        ) where {Ring}
-        FasterVanDerHoevenLecerf(
-            ring,
-            boundsinfo.numtotaldeg, boundsinfo.dentotaldeg,
-            boundsinfo.numpartialdegs, boundsinfo.denpartialdegs,
-            boundsinfo.numnterms, boundsinfo.dennterms
-        )
-    end
-
-    function FasterVanDerHoevenLecerf(
+    function VanDerHoevenLecerf(
         ring::Ring,
         Nd::Int, Dd::Int,
         Nds::Vector{<:Integer}, Dds::Vector{<:Integer},
@@ -59,7 +45,7 @@ mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
         @assert length(Dds) == length(Nds) == n
         K = base_ring(ring)
         Runiv, _ = Nemo.PolynomialRing(K, "u")
-        cauchy = FasterCauchy(Runiv, Nd, Dd)
+        cauchy = CauchyInterpolator(Runiv, Nd, Dd)
         ringhom = homogenize(ring)
         Nds = [Nd, Nds...]
         Dds = [Dd, Dds...]
@@ -91,7 +77,7 @@ mutable struct FasterVanDerHoevenLecerf{Ring,UnivRing}
     end
 end
 
-function get_evaluation_points!(vdhl::FasterVanDerHoevenLecerf)
+function get_evaluation_points!(vdhl::VanDerHoevenLecerf)
     if vdhl.J == -1
         vdhl.J = 0
     else
@@ -127,7 +113,7 @@ function get_evaluation_points!(vdhl::FasterVanDerHoevenLecerf)
     J = vdhl.J
 
     used = Dict{elem_type(K), Bool}()
-    ξij = distinct_points(K, Nd + Dd + 2)
+    ξij = distinct_nonzero_points(K, Nd + Dd + 2)
     ωξij = Vector{Vector{elem_type(K)}}(undef, Nd + Dd + 2)
     ωξij0 = Vector{elem_type(K)}(undef, Nd + Dd + 2)
 
@@ -162,7 +148,7 @@ function get_evaluation_points!(vdhl::FasterVanDerHoevenLecerf)
     vdhl.points
 end
 
-function interpolate!(vdhl::FasterVanDerHoevenLecerf, evaluations::Vector{OO}) where {OO}
+function interpolate!(vdhl::VanDerHoevenLecerf, evaluations::Vector{OO}) where {OO}
     T = vdhl.T
     R = vdhl.ring
     K = base_ring(R)
@@ -209,85 +195,5 @@ function interpolate!(vdhl::FasterVanDerHoevenLecerf, evaluations::Vector{OO}) w
         num = map_coefficients(c -> div(c, normalization_factor), num)
         den = map_coefficients(c -> div(c, normalization_factor), den)
     end
-    num, den
-end
-
-# Interpolate the blackbox!
-# in T*M(D)log(D) + O(T*n*D*log(q)) + T*D*L + M(T)log(T)
-function interpolate!(vdhl::FasterVanDerHoevenLecerf, blackbox)
-    # Polynomial ring K[x1,x2...xn]
-    R = vdhl.ring
-    K = base_ring(R)
-    Nd, Dd = vdhl.Nd, vdhl.Dd
-    Nt, Dt = vdhl.Nt, vdhl.Dt
-    Ni, Di = vdhl.Ni, vdhl.Di
-    cauchy = vdhl.cauchy
-    T = max(Nt, Dt)
-    # Polynomial ring K[x0,x1,x2...xn]
-    Rhom = Ni.ring
-    # We will substitute points, such that
-    # point[j]*dilation[j] + shift[j]
-    shift = random_point(Rhom)
-    dilation = random_point(Rhom)
-    # The starting point in the geometric sequence...
-    ω = startingpoint(Ni)
-    # ... and the sequence itself (the first degree is 0)
-    ωs = map(i -> ω .^ i, 0:2T-1)
-    Nys = Vector{elem_type(K)}(undef, 2T)
-    Dys = Vector{elem_type(K)}(undef, 2T)
-    ωξij = Vector{Vector{elem_type(K)}}(undef, Nd + Dd + 2)
-    ωξij0 = Vector{elem_type(K)}(undef, Nd + Dd + 2)
-    ξij = distinct_points(K, Nd + Dd + 2)
-    # This cycle below is 
-    # T*((D + 2)*4n*log(q) + D*L + 2*D*log(q) + M(D)log(D)),
-    # which is T*M(D)log(D) + O(T*n*D*log(q)) + T*D*L
-    for i in 0:2T-1
-        ωi = ωs[i + 1]
-        ω0 = ωi[1]
-        ξij[1] = random_point(K)
-        # The cycle below is (D + 2)*4n*log(q)
-        @inbounds for j in 1:Nd + Dd + 2
-            !isassigned(ωξij, j) && (ωξij[j] = zeros(K, length(ω) - 1))
-            for nj in 2:length(ω)
-                ωξij[j][nj - 1] = ωi[nj]
-            end
-            ξ = ξij[j]
-            ωξij0[j] = ω0*ξ*dilation[1] + shift[1]
-            for nj in 2:length(ω)
-                ωξij[j][nj-1] = ωξij[j][nj-1]*ξ*dilation[nj] + shift[nj]
-                ωξij[j][nj-1] = ωξij[j][nj-1] // ωξij0[j]
-            end
-        end
-        fij = map(blackbox, ωξij)
-        # multiply by the correction factor ω0^(N - D)
-        # 2*D*log(q)
-        fij = map(cξ -> cξ[1] * cξ[2]^(Nd - Dd), zip(fij, ωξij0))
-        # interpolate the numerator and the denominator densely.
-        # M(D)logD
-        N, D = interpolate!(cauchy, ξij, fij)
-        @assert isone(trailing_coefficient(D))
-        Nys[i + 1] = leading_coefficient(N)
-        Dys[i + 1] = leading_coefficient(D)
-    end
-    # Interpolate the leading coefficients in the numerator and denominator
-    # M(T)logT
-    num = interpolate!(Ni, ωs[1:2*Nt], Nys[1:2*Nt])
-    den = interpolate!(Di, ωs[1:2*Dt], Dys[1:2*Dt])
-    # backward dilation,
-    # substitute (x0,x1,x2,...xn) = (inv(d0)x0,inv(d1)x1,...,inv(dn)xn)
-    # n*log(q), and T
-    undilated = gens(Rhom) .* map(inv, dilation) 
-    num = evaluate(num, undilated)
-    den = evaluate(den, undilated)
-    # dehomogenization,
-    # substitute (x0,x1,x2...,xn) = (1,x1,x2...,xn),
-    xs0 = [one(R), gens(R)...]
-    num = evaluate(num, xs0)
-    den = evaluate(den, xs0)
-    # normalize by the trailing_coefficient,
-    # T*n*log(q)
-    normalization_factor = trailing_coefficient(den)
-    num = map_coefficients(c -> div(c, normalization_factor), num)
-    den = map_coefficients(c -> div(c, normalization_factor), den)
     num, den
 end

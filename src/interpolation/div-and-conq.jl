@@ -136,32 +136,3 @@ function fastpolyinterpolate(R, xs, ys)
     # O(M(n)logn)
     lagrangetree(z, ysi, ptree)
 end
-
-# Adapted from
-#   "Solving Systems of Non-Linear Polynomial Equations Faster"
-#   by Canny, Kaltofen, and Yagati, 1989
-#
-# Currently, another thing is implemented
-#
-# Given a multivariate polynomial
-#   f(x1..xn) = a1m1 + a2m2 + ... + atmt 
-# and a list of evaluation points
-#   ωs = [(1,...,1),..,(ω1^i,...,ωn^i),..,(ω1^T,..., ωn^{T-1})]
-# Computes and returns bi = f(ωi) for ωi in ωs in O(M(T)log t) 
-function fast_multivariate_evaluate(f, ωs)
-    #     |1 v1 ... v1^{T-1}|
-    # V = |1 v2 ... v2^{T-1}|
-    #     |     ...
-    #     |1 vt ... vt^{T-1}|
-    # a = (a1...at), b = (b0...bT-1)
-    # Then
-    #   b = V^T a  (1)
-    # Let a' = V \ a (solve this in M(t)log t)
-    # Then (1) becomes 
-    #   b = (V^T V) a'
-    # The product of Hankel matrix (V^T V) and a'
-    # can be computed in O(M(t)), and the entries of
-    # V^T V can be computed in O(M(T)log t)
-    # a = collect(coefficients(f))
-    map(ω -> evaluate(f, ω), ωs)
-end

@@ -3,30 +3,26 @@ mutable struct GroebnerState{BB}#, D, E, C}
     # original polynomials over Q(a)
     # (`a` are transcendental parameters)
     blackbox::BB
-    shape#::Vector{Vector{S}}
+    shape::Any#::Vector{Vector{S}}
+    coeffs_at_random_point::Dict{Any, Any}
     # total degrees of the parameters `a` of the Groebner basis
-    param_degrees#::Vector{Vector{D}}
+    param_degrees::Any#::Vector{Vector{D}}
     # exponents of the parameters `a` of the Groebner basis
-    param_exponents#::Vector{Vector{E}}
+    param_exponents::Any#::Vector{Vector{E}}
     # coefficients in the parameters `a` of the Groebner basis
     # (in Q)
-    param_coeffs#::Vector{Vector{C}}
-    field_to_polys
-    graph
+    param_coeffs::Any#::Vector{Vector{C}}
+    field_to_polys::Any
+    graph::Any
 
-    function GroebnerState(blackbox::T) where {T<:AbstractBlackboxIdeal}
+    function GroebnerState(blackbox::T) where {T <: AbstractBlackboxIdeal}
         Rx = parent(blackbox)
         Ra = parent_params(blackbox)
         params = gens(Ra)
         polyvars = gens(Rx)
         K = base_ring(Ra)
-        @info "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
-        new{T}(
-            blackbox, 
-            nothing, nothing, nothing, nothing,
-            Dict(),
-            nothing
-        )
+        @logmsg LogLevel(0) "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
+        new{T}(blackbox, nothing, Dict(), nothing, nothing, nothing, Dict(), nothing)
     end
 end
 

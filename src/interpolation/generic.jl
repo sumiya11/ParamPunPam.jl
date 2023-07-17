@@ -14,13 +14,19 @@ function random_point(ring)
 end
 
 # returns an array of L distinct points from the given field
-function distinct_points(field, L, prev=nothing)
+function distinct_nonzero_points(field, L, prev=nothing)
+    @label Start
     ans = [random_point(field) for _ in 1:L]
     if prev !== nothing
         ans = vcat(prev, ans)
     end
-    allunique(ans) && return ans
-    distinct_points(field, L, prev)
+    if any(iszero, ans)
+        @goto Start
+    end
+    if length(unique(ans)) != length(ans)
+        @goto Start
+    end
+    ans
 end
 
 homogenize(ring; varname="x0") = first(PolynomialRing(base_ring(ring), append!([varname], map(string, AbstractAlgebra.symbols(ring))), ordering=Nemo.ordering(ring)))
@@ -48,4 +54,29 @@ function getboundsinfo(f::AbstractAlgebra.Generic.Frac)
         dennterms=denmi.nterms,
         denpartialdegs=denmi.partialdegs
     )
+end
+
+# Returns a random generator of the multiplicative group of field K
+function randomgenerator(K)
+    ord = BigInt(order(K) - 1)
+    factors = Primes.factor(Vector, ord)
+    g = rand(K)
+    i = 0
+    while !generates_mult_group(ord, factors, g)
+        i += 1
+        g = rand(K)
+        i > ord && error("The characteristic of the base field is too small, sorry")
+    end
+    g
+end
+
+function generates_mult_group(ord, factors, kj)
+    iszero(kj) && return false
+    for p in factors
+        d = div(ord, p)
+        if isone(kj^d)
+            return false
+        end
+    end
+    true
 end

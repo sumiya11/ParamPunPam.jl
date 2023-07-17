@@ -31,7 +31,7 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
     function BasicBlackboxIdeal(polys::Vector{T}) where {T}
         @assert !isempty(polys)
         polys = filter(!iszero, polys)
-        @info "Constructing a BasicBlackboxIdeal from $(length(polys)) input polynomials"
+        @info "Constructing a blackbox from $(length(polys)) input polynomials"
         Rx = parent(polys[1])
         Ra = base_ring(Rx)
         if Ra isa Nemo.FracField
@@ -53,7 +53,7 @@ parent_mod_p(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys_mod_p))
 Base.length(ideal::BasicBlackboxIdeal) = length(ideal.polys)
 
 function reduce_mod_p!(ideal::BasicBlackboxIdeal, ff)
-    @info "Reducing modulo $(ff).."
+    @logmsg LogLevel(0) "Reducing modulo $(ff).."
     ideal.polys_mod_p = map(
         poly -> map_coefficients(
             f -> map_coefficients(

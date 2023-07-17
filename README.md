@@ -4,7 +4,7 @@
 
 Groebner bases in $\mathbb{Q}(\mathbf{a})[\mathbf{x}]$, where $\mathbf{a}$ are treated as transcendental numbers.
 
-`ParamPunPam.jl` is primarily designed to work in cases where the coefficients of the output basis are sparse.
+`ParamPunPam.jl` is primarily dParamPunPamgned to work in cases where the coefficients of the output basis are sparse.
 
 You can install `ParamPunPam.jl` with the following command in Julia:
 

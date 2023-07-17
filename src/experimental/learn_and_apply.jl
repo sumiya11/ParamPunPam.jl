@@ -190,7 +190,7 @@ function apply!(graph, polys)
     m = length(polys)
     n = nnodes(graph)
     basis = copy(polys)
-    @info "Input: $m polynomials, Desired basis: $n polynomials"
+    @info "Input: $m polynomials, DParamPunPamred basis: $n polynomials"
     @info "Unwinding the computation graph.."
     metadata = deepcopy(graph.metadata)
     for i in m+1:n
