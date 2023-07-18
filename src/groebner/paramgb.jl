@@ -46,6 +46,8 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     rational_interpolator = get(kwargs, :rational_interpolator, :VanDerHoevenLecerf)
     polynomial_interpolator = get(kwargs, :polynomial_interpolator, :PrimesBenOrTiwari)
     up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
+    @assert ordering(parent(blackbox)) == ordering(parent_mod_p(blackbox)) "Polynomial ring monomial orderings do not agree"
+    ord = ordering(parent(blackbox))
     # If no hint for degrees is given, then try to guess degrees
     if !haskey(kwargs, :up_to_degree)
         if !estimate_degrees
@@ -55,6 +57,7 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     end
     @info """
     Computing parametric Groebner basis up to degrees $up_to_degree
+    Ordering: $ord
     Estimate degrees: $estimate_degrees
     Rational interpolator: $rational_interpolator
     Polynomial interpolator: $polynomial_interpolator"""
