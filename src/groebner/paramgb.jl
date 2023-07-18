@@ -46,7 +46,6 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     rational_interpolator = get(kwargs, :rational_interpolator, :VanDerHoevenLecerf)
     polynomial_interpolator = get(kwargs, :polynomial_interpolator, :PrimesBenOrTiwari)
     up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
-    @assert ordering(parent(blackbox)) == ordering(parent_mod_p(blackbox)) "Polynomial ring monomial orderings do not agree"
     ord = ordering(parent(blackbox))
     # If no hint for degrees is given, then try to guess degrees
     if !haskey(kwargs, :up_to_degree)
@@ -124,6 +123,7 @@ function discover_shape!(state, modular; η=2)
     blackbox = state.blackbox
     # Guess the shape for 1 lucky prime:
     reduce_mod_p!(blackbox, modular.ff)
+    @assert ordering(parent(blackbox)) == ordering(parent_mod_p(blackbox)) "Polynomial ring monomial orderings do not agree"
     prog = ProgressUnknown(
         "# Computing specializations.. ",
         spinner=true,
