@@ -11,8 +11,6 @@ using Nemo
     @test base_ring(bb) == Nemo.QQ
     K = Nemo.GF(2^31-1)
     ParamPunPam.reduce_mod_p!(bb, K)
-    @test ParamPunPam.base_ring_mod_p(bb) == K
     point = map(K, [1])
-    x, y = gens(ParamPunPam.parent_mod_p(bb))
-    # @test ParamPunPam.evaluate_mod_p(bb, point) == [2x + y, 2x + 1]
+    # @test ParamPunPam.specialize_mod_p(bb, point) == [2x + y, 2x + 1]
 end

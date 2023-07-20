@@ -123,7 +123,6 @@ function discover_shape!(state, modular; η=2)
     blackbox = state.blackbox
     # Guess the shape for 1 lucky prime:
     reduce_mod_p!(blackbox, modular.ff)
-    @assert ordering(parent(blackbox)) == ordering(parent_mod_p(blackbox)) "Polynomial ring monomial orderings do not agree"
     prog = ProgressUnknown(
         "# Computing specializations.. ",
         spinner=true,
@@ -134,7 +133,7 @@ function discover_shape!(state, modular; η=2)
     @label Start
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:(1 + η))
-    polysspecmodp = map(point -> evaluate_mod_p(blackbox, point), randompoints)
+    polysspecmodp = map(point -> specialize_mod_p(blackbox, point), randompoints)
     graph, gb = groebner_learn(polysspecmodp[1], sweep=true)
     state.graph = graph
     bases = empty(polysspecmodp)
@@ -222,7 +221,7 @@ function discover_param_total_degrees!(state, modular)
         end
         for idx in J:npoints
             point = x_points[idx]
-            Ip = evaluate_mod_p(blackbox, point)
+            Ip = specialize_mod_p(blackbox, point)
             flag, basis = groebner_apply!(graph, Ip, sweep=true)
             update!(prog, idx, spinner="⌜⌝⌟⌞", valuecolor=_progressbar_value_color)
             # TODO: just select another batch of points, no need to throw
@@ -335,7 +334,7 @@ function interpolate_param_exponents!(
 
         for idx in J:npoints
             point = x_points[idx]
-            Ip = evaluate_mod_p(blackbox, point)
+            Ip = specialize_mod_p(blackbox, point)
             flag, basis = groebner_apply!(graph, Ip, sweep=true)
             update!(
                 prog,

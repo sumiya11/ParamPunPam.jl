@@ -10,13 +10,11 @@ Subtypes of `AbstractBlackboxIdeal` must implement the following functions:
 
 - `length(<:AbstractBlackboxIdeal)`: the number of generators.
 - `base_ring(<:AbstractBlackboxIdeal)`: original ground field.
-- `base_ring_mod_p(<:AbstractBlackboxIdeal)`: current modular ground field.
 - `parent(<:AbstractBlackboxIdeal)`: original parent ring.
 - `parent_params(<:AbstractBlackboxIdeal)`: original coefficient parent ring.
-- `parent_mod_p(<:AbstractBlackboxIdeal)`: current modular parent ring.
 - `reduce_mod_p!(<:AbstractBlackboxIdeal, p)`: reduces the generators modulo
   `p`.
-- `evaluate_mod_p(<:AbstractBlackboxIdeal, point)`: specializes the ideal at
+- `specialize_mod_p(<:AbstractBlackboxIdeal, point)`: specializes the ideal at
   `point` and returns the generators of a specialized ideal in Zp[y].
 """
 abstract type AbstractBlackboxIdeal end
@@ -46,10 +44,8 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
 end
 
 AbstractAlgebra.base_ring(ideal::BasicBlackboxIdeal) = base_ring(base_ring(first(ideal.polys)))
-base_ring_mod_p(ideal::BasicBlackboxIdeal) = base_ring(base_ring(first(ideal.polys_mod_p)))
 AbstractAlgebra.parent(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys))
 parent_params(ideal::BasicBlackboxIdeal) = base_ring(parent(first(ideal.polys)))
-parent_mod_p(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys_mod_p))
 Base.length(ideal::BasicBlackboxIdeal) = length(ideal.polys)
 
 function reduce_mod_p!(ideal::BasicBlackboxIdeal, ff)
@@ -67,8 +63,7 @@ function reduce_mod_p!(ideal::BasicBlackboxIdeal, ff)
     nothing
 end
 
-function evaluate_mod_p(ideal::BasicBlackboxIdeal, point)
-    @assert base_ring_mod_p(ideal) == parent(first(point))
+function specialize_mod_p(ideal::BasicBlackboxIdeal, point)
     polys_mod_p = ideal.polys_mod_p
     for poly in polys_mod_p
         if iszero(evaluate(leading_coefficient(poly), point))
