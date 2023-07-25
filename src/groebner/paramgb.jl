@@ -95,11 +95,18 @@ function _paramgb(
     # Interpolate the exponents in the parametric coefficients.
     # This uses exactly 1 prime number
     InterpolatorType = select_interpolator(rational_interpolator, polynomial_interpolator)
+    @label InterpolateUsingOnePrime
     interpolate_param_exponents!(state, modular, up_to_degree, InterpolatorType)
     # Interpolate the rational coefficients of the parametric coefficients.
-    # This is expected to use 1 prime number, but may use more
-    recover_coefficients!(state, modular)
-    # Combine and return the above two 
+    # This uses the currently accumulated bases modulo different primes to
+    # recover the coefficients by the means of CRT and Rational number
+    # reconstruction 
+    success = recover_coefficients!(state, modular)
+    if !success
+        find_next_lucky_prime!(modular)
+        @goto InterpolateUsingOnePrime
+    end
+    # Construct the final basis 
     basis = construct_basis(state)
     basis
 end
@@ -134,12 +141,12 @@ function discover_shape!(state, modular; η=2)
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:(1 + η))
     polysspecmodp = map(point -> specialize_mod_p(blackbox, point), randompoints)
-    graph, gb = groebner_learn(polysspecmodp[1], sweep=true)
-    state.graph = graph
+    context, gb = groebner_learn(polysspecmodp[1], sweep=true)
+    state.context = context
     bases = empty(polysspecmodp)
     for i in 1:length(polysspecmodp)
         F = polysspecmodp[i]
-        flag, gb = groebner_apply!(graph, F, sweep=true)
+        flag, gb = groebner_apply!(context, F, sweep=true)
         update!(prog, i, spinner="⌜⌝⌟⌞", valuecolor=_progressbar_value_color)
         if !flag
             @warn "Unlucky cancellation of coefficients encountered"
@@ -156,7 +163,7 @@ function discover_shape!(state, modular; η=2)
     end
     finish!(prog)
     state.shape = basisshape(basis)
-    state.coeffs_at_random_point[randompoints[1]] = basiscoeffs(basis)
+    state.basis_at_random_point[randompoints[1]] = basis
     @debug "The shape of the basis is: $(length(basis)) polynomials"
     @debug "Monomials in the basis are:" state.shape
     nothing
@@ -176,7 +183,7 @@ function discover_param_total_degrees!(state, modular)
     shift = distinct_nonzero_points(K, n)
     dilation = distinct_nonzero_points(K, n)
     shape = state.shape
-    graph = state.graph
+    context = state.context
     # Current bounds on the total degree
     N, D = 1, 1
     npoints = N + D + 2
@@ -222,7 +229,7 @@ function discover_param_total_degrees!(state, modular)
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(graph, Ip, sweep=true)
+            flag, basis = groebner_apply!(context, Ip, sweep=true)
             update!(prog, idx, spinner="⌜⌝⌟⌞", valuecolor=_progressbar_value_color)
             # TODO: just select another batch of points, no need to throw
             !flag && __throw_unlucky_cancellation()
@@ -262,14 +269,14 @@ function interpolate_param_exponents!(
 ) where {InterpolatorType}
     @info "Interpolating the exponents in parameters.."
     blackbox = state.blackbox
+    reduce_mod_p!(blackbox, modular.ff)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
     Ru, _ = PolynomialRing(modular.ff, symbols(Ra), ordering=Nemo.ordering(Ra))
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape
-    point_x0, coeffs_at_x0 = first(state.coeffs_at_random_point)
-    graph = state.graph
+    context = state.context
     # Calculate the degrees for interpolation
     Nd = up_to_degree[1] + 1
     Dd = up_to_degree[2] + 1
@@ -335,7 +342,7 @@ function interpolate_param_exponents!(
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(graph, Ip, sweep=true)
+            flag, basis = groebner_apply!(context, Ip, sweep=true)
             update!(
                 prog,
                 idx,
@@ -385,6 +392,7 @@ function interpolate_param_exponents!(
     end
     finish!(prog)
     state.param_exponents = param_exponents
+    state.field_to_param_exponents[modular.ff] = state.param_exponents
     @info "Success! $(npoints) points used."
     maxDn = maximum(l -> maximum(total_degree ∘ first, l), param_exponents)
     maxDd = maximum(l -> maximum(total_degree ∘ last, l), param_exponents)
@@ -399,36 +407,23 @@ end
 
 function recover_coefficients!(state, modular)
     @info "Recovering the coefficients.."
-    blackbox = state.blackbox
-    Rorig = parent(blackbox)
-    Rparam = parent_params(blackbox)
-    Rorig_frac, _ = PolynomialRing(
-        Nemo.FractionField(Rparam),
-        symbols(Rorig),
-        ordering=Nemo.ordering(Rorig)
-    )
-    Rparam_frac = base_ring(Rorig_frac)
-    polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))
-    p = convert(Int, characteristic(modular.ff))
-    for i in 1:length(state.shape)
-        coeffsrec = Vector{elem_type(Rparam_frac)}(undef, length(state.shape[i]))
-        for j in 1:length(state.shape[i])
-            P, Q = state.param_exponents[i][j]
-            Prec = map_coefficients(c -> rational_reconstruction(Int(data(c)), p), P)
-            Qrec = map_coefficients(c -> rational_reconstruction(Int(data(c)), p), Q)
-            coeffsrec[j] = Prec // Qrec
-        end
-        polysreconstructed[i] =
-            Rorig_frac(coeffsrec, map(e -> exponent_vector(e, 1), state.shape[i]))
+    reconstruct_crt!(state, modular)
+    success = reconstruct_rational!(state, modular)
+    if !success
+        @info "Rational reconstrction failed, selecting next prime.."
+        return success
     end
-    state.param_coeffs = polysreconstructed
-    # TODO: handle the case of >1 prime
-    @info "Success! Used $(1) prime in total"
-    nothing
+    success = assess_correctness(state, modular)
+    if success
+        @info "Success! Used $(length(modular.used_primes) + 1) prime in total"
+    else
+        @info "Correctness check failed, selecting next prime.."
+    end
+    success
 end
 
 function construct_basis(state)
-    state.param_coeffs
+    state.param_basis
 end
 
 function check_shape(shape, basis)
@@ -438,9 +433,9 @@ function check_shape(shape, basis)
     if map(length, shape) != map(length, basis)
         return false
     end
-    if !(shape == basisshape(basis))
-        return false
-    end
+    # if !(shape == basisshape(basis))
+    #     return false
+    # end
     true
 end
 
@@ -456,5 +451,6 @@ function majorityrule(bases::Vector{T}) where {T}
     true, first(bases)
 end
 
+basisexponents(basis) = map(collect ∘ exponent_vectors, basis)
 basisshape(basis) = map(collect ∘ monomials, basis)
 basiscoeffs(basis) = map(collect ∘ coefficients, basis)

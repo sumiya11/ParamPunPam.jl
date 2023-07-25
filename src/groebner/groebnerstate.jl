@@ -1,19 +1,19 @@
 
-mutable struct GroebnerState{BB}#, D, E, C}
+mutable struct GroebnerState{BB}
     # original polynomials over Q(a)
-    # (`a` are transcendental parameters)
     blackbox::BB
-    shape::Any#::Vector{Vector{S}}
-    coeffs_at_random_point::Dict{Any, Any}
-    # total degrees of the parameters `a` of the Groebner basis
-    param_degrees::Any#::Vector{Vector{D}}
-    # exponents of the parameters `a` of the Groebner basis
-    param_exponents::Any#::Vector{Vector{E}}
-    # coefficients in the parameters `a` of the Groebner basis
-    # (in Q)
-    param_coeffs::Any#::Vector{Vector{C}}
-    field_to_polys::Any
-    graph::Any
+    shape::Vector{Vector{gfp_mpoly}}
+    basis_at_random_point::Dict{Any, Any}
+    # total degrees of the parameters of the Groebner basis
+    param_degrees::Vector{Vector{Tuple{Int, Int}}}
+    # exponents of the parameters of the Groebner basis
+    param_exponents::Vector{Vector{Tuple{gfp_mpoly, gfp_mpoly}}}
+    param_coeffs_crt::Any
+    field_to_param_exponents::Dict{Any, Any}
+    # fully reconstructed basis
+    param_basis::Any
+    field_to_polys::Dict{Any, Any}
+    context::Any
 
     function GroebnerState(blackbox::T) where {T <: AbstractBlackboxIdeal}
         Rx = parent(blackbox)
@@ -21,8 +21,19 @@ mutable struct GroebnerState{BB}#, D, E, C}
         params = gens(Ra)
         polyvars = gens(Rx)
         K = base_ring(Ra)
-        @logmsg LogLevel(0) "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
-        new{T}(blackbox, nothing, Dict(), nothing, nothing, nothing, Dict(), nothing)
+        @info "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
+        new{T}(
+            blackbox,
+            Vector{Vector{gfp_mpoly}}(),
+            Dict(),
+            Vector{Vector{Tuple{Int, Int}}}(),
+            Vector{Vector{Tuple{gfp_mpoly, gfp_mpoly}}}(),
+            nothing,
+            Dict(),
+            nothing,
+            Dict(),
+            nothing
+        )
     end
 end
 
@@ -30,4 +41,174 @@ function randluckyspecpoint(state::GroebnerState, K)
     # TODO: this is not correct!
     Ra = parent_params(state.blackbox)
     [rand(K) for _ in 1:nvars(Ra)]
+end
+
+function reconstruct_crt!(state, modular)
+    field_to_param_exponents = state.field_to_param_exponents
+    char = UInt64(characteristic(modular.ff))
+    if length(field_to_param_exponents) == 1
+        shape = state.shape
+        param_coeffs_crt =
+            Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(undef, length(shape))
+        for i in 1:length(param_coeffs_crt)
+            param_coeffs_crt[i] =
+                Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}(undef, length(shape[i]))
+            for j in 1:length(param_coeffs_crt[i])
+                P, Q = state.param_exponents[i][j]
+                Pcoeffs = map(c -> BigInt(data(c)), collect(coefficients(P)))
+                Qcoeffs = map(c -> BigInt(data(c)), collect(coefficients(Q)))
+                param_coeffs_crt[i][j] = (Pcoeffs, Qcoeffs)
+            end
+        end
+        @debug "CRT-Reconstructed coefficients" param_coeffs_crt
+        state.param_coeffs_crt = param_coeffs_crt
+        modular.modulo *= char
+        return nothing
+    end
+    buf, n1, n2, M, bigch, invm1, invm2 =
+        BigInt(), BigInt(), BigInt(), BigInt(), BigInt(), BigInt(), BigInt()
+    Base.GMP.MPZ.set_ui!(bigch, char)
+    Base.GMP.MPZ.mul_ui!(M, modular.modulo, char)
+    Base.GMP.MPZ.gcdext!(buf, invm1, invm2, modular.modulo, bigch)
+    param_exponents = state.param_exponents
+    param_coeffs_crt = state.param_coeffs_crt
+    for i in 1:length(param_exponents)
+        for j in 1:length(param_exponents[i])
+            @assert length(param_exponents[i]) == length(param_coeffs_crt[i])
+            for k in 1:length(param_exponents[i][j][1])
+                ca = param_coeffs_crt[i][j][1][k]
+                cf = UInt64(data(coeff(param_exponents[i][j][1], k)))
+                CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
+                Base.GMP.MPZ.set!(param_coeffs_crt[i][j][1][k], buf)
+            end
+            for k in 1:length(param_exponents[i][j][2])
+                ca = param_coeffs_crt[i][j][2][k]
+                cf = UInt(data(coeff(param_exponents[i][j][2], k)))
+                CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
+                Base.GMP.MPZ.set!(param_coeffs_crt[i][j][2][k], buf)
+            end
+        end
+    end
+    @debug "CRT-Reconstructed coefficients" param_coeffs_crt
+    modular.modulo *= char
+    nothing
+end
+
+function reconstruct_rational!(state, modular)
+    blackbox = state.blackbox
+    Rorig = parent(blackbox)
+    Rparam = parent_params(blackbox)
+    Rorig_frac, _ = PolynomialRing(
+        Nemo.FractionField(Rparam),
+        symbols(Rorig),
+        ordering=Nemo.ordering(Rorig)
+    )
+    Rparam_frac = base_ring(Rorig_frac)
+    polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))
+    modulo = modular.modulo
+    bnd = rational_reconstruction_bound(modulo)
+    buf, buf1 = BigInt(), BigInt()
+    buf2, buf3 = BigInt(), BigInt()
+    u1, u2 = BigInt(), BigInt()
+    u3, v1 = BigInt(), BigInt()
+    v2, v3 = BigInt(), BigInt()
+    param_coeffs_crt = state.param_coeffs_crt
+    param_exponents = state.param_exponents
+    @debug "Reconstruction" modulo bnd
+    for i in 1:length(param_coeffs_crt)
+        coeffsrec = Vector{elem_type(Rparam_frac)}(undef, length(state.shape[i]))
+        # skip reconstrction of the first coefficient, it is equal to one in the
+        # reduced basis
+        for j in 2:length(param_coeffs_crt[i])
+            rec_coeffs = Vector{Rational{BigInt}}(undef, length(param_coeffs_crt[i][j][1]))
+            for k in 1:length(param_coeffs_crt[i][j][1])
+                cz = param_coeffs_crt[i][j][1][k]
+                cq = BigInt()
+                num, den = numerator(cq), denominator(cq)
+                success = rational_reconstruction!(
+                    num,
+                    den,
+                    bnd,
+                    buf,
+                    buf1,
+                    buf2,
+                    buf3,
+                    u1,
+                    u2,
+                    u3,
+                    v1,
+                    v2,
+                    v3,
+                    cz,
+                    modulo
+                )
+                rec_coeffs[k] = cq
+                !success && return false
+            end
+            exponent_vecs = collect(exponent_vectors(param_exponents[i][j][1]))
+            param_num = Rparam(rec_coeffs, exponent_vecs)
+            rec_coeffs = Vector{Rational{BigInt}}(undef, length(param_coeffs_crt[i][j][2]))
+            for k in 1:length(param_coeffs_crt[i][j][2])
+                cz = param_coeffs_crt[i][j][2][k]
+                cq = BigInt()
+                num, den = numerator(cq), denominator(cq)
+                success = rational_reconstruction!(
+                    num,
+                    den,
+                    bnd,
+                    buf,
+                    buf1,
+                    buf2,
+                    buf3,
+                    u1,
+                    u2,
+                    u3,
+                    v1,
+                    v2,
+                    v3,
+                    cz,
+                    modulo
+                )
+                rec_coeffs[k] = cq
+                !success && return false
+            end
+            exponent_vecs = collect(exponent_vectors(param_exponents[i][j][2]))
+            param_den = Rparam(rec_coeffs, exponent_vecs)
+            coeffsrec[j] = param_num // param_den
+        end
+        coeffsrec[1] = one(Rparam_frac)
+        @debug "QQ-Reconstructed coefficients" coeffsrec
+        polysreconstructed[i] =
+            Rorig_frac(coeffsrec, map(e -> exponent_vector(e, 1), state.shape[i]))
+    end
+    state.param_basis = polysreconstructed
+    true
+end
+
+function assess_correctness(state, modular)
+    ff = modular.ff
+    point = randluckyspecpoint(state, modular.ff)
+    @debug "Checking correctness at $point"
+    generators_zp = specialize_mod_p(state.blackbox, point)
+    R_zp = parent(first(generators_zp))
+    basis_specialized_coeffs = map(
+        f -> map(
+            c ->
+                evaluate(map_coefficients(cc -> ff(cc), numerator(c)), point) //
+                evaluate(map_coefficients(cc -> ff(cc), denominator(c)), point),
+            collect(coefficients(f))
+        ),
+        state.param_basis
+    )
+    param_basis_specialized = map(
+        i -> R_zp(basis_specialized_coeffs[i], collect(exponent_vectors(state.param_basis[i]))),
+        1:length(basis_specialized_coeffs)
+    )
+    @debug "Evaluated basis" param_basis_specialized
+    if !isgroebner(param_basis_specialized)
+        return false
+    end
+    inclusion = normalform(param_basis_specialized, generators_zp)
+    @debug "Inclusion in correctness assessment" inclusion
+    all(iszero, inclusion)
 end
