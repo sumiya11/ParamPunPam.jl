@@ -4,7 +4,7 @@ using TestSetExtensions
 import AbstractAlgebra
 using Nemo
 
-# using ParamPunPam
+using ParamPunPam
 
 @testset "All tests" verbose = true begin
     @includetests ["fields", "discrete-log", "div-and-conq", "fastgcd"]
