@@ -78,13 +78,13 @@ function reconstruct_crt!(state, modular)
             for k in 1:length(param_exponents[i][j][1])
                 ca = param_coeffs_crt[i][j][1][k]
                 cf = UInt64(data(coeff(param_exponents[i][j][1], k)))
-                CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
+                Groebner.CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
                 Base.GMP.MPZ.set!(param_coeffs_crt[i][j][1][k], buf)
             end
             for k in 1:length(param_exponents[i][j][2])
                 ca = param_coeffs_crt[i][j][2][k]
                 cf = UInt(data(coeff(param_exponents[i][j][2], k)))
-                CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
+                Groebner.CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
                 Base.GMP.MPZ.set!(param_coeffs_crt[i][j][2][k], buf)
             end
         end
@@ -106,7 +106,7 @@ function reconstruct_rational!(state, modular)
     Rparam_frac = base_ring(Rorig_frac)
     polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))
     modulo = modular.modulo
-    bnd = rational_reconstruction_bound(modulo)
+    bnd = Groebner.rational_reconstruction_bound(modulo)
     buf, buf1 = BigInt(), BigInt()
     buf2, buf3 = BigInt(), BigInt()
     u1, u2 = BigInt(), BigInt()
@@ -123,9 +123,9 @@ function reconstruct_rational!(state, modular)
             rec_coeffs = Vector{Rational{BigInt}}(undef, length(param_coeffs_crt[i][j][1]))
             for k in 1:length(param_coeffs_crt[i][j][1])
                 cz = param_coeffs_crt[i][j][1][k]
-                cq = BigInt()
+                cq = Rational{BigInt}(0)
                 num, den = numerator(cq), denominator(cq)
-                success = rational_reconstruction!(
+                success = Groebner.rational_reconstruction!(
                     num,
                     den,
                     bnd,
@@ -150,9 +150,9 @@ function reconstruct_rational!(state, modular)
             rec_coeffs = Vector{Rational{BigInt}}(undef, length(param_coeffs_crt[i][j][2]))
             for k in 1:length(param_coeffs_crt[i][j][2])
                 cz = param_coeffs_crt[i][j][2][k]
-                cq = BigInt()
+                cq = Rational{BigInt}(0)
                 num, den = numerator(cq), denominator(cq)
-                success = rational_reconstruction!(
+                success = Groebner.rational_reconstruction!(
                     num,
                     den,
                     bnd,
@@ -185,10 +185,14 @@ function reconstruct_rational!(state, modular)
     true
 end
 
-function assess_correctness(state, modular)
+function assess_correctness_mod_p(state, modular)
+    # NOTE: in this state, ideally, this should always pass, since the modulo
+    # we use to check correctness is the same as the one used to compute the
+    # basis
     ff = modular.ff
-    point = randluckyspecpoint(state, modular.ff)
-    @debug "Checking correctness at $point"
+    reduce_mod_p!(state.blackbox, ff)
+    point = randluckyspecpoint(state, ff)
+    @debug "Checking correctness at $point in $ff"
     generators_zp = specialize_mod_p(state.blackbox, point)
     R_zp = parent(first(generators_zp))
     basis_specialized_coeffs = map(
@@ -201,11 +205,16 @@ function assess_correctness(state, modular)
         state.param_basis
     )
     param_basis_specialized = map(
-        i -> R_zp(basis_specialized_coeffs[i], collect(exponent_vectors(state.param_basis[i]))),
+        i -> R_zp(
+            basis_specialized_coeffs[i],
+            collect(exponent_vectors(state.param_basis[i]))
+        ),
         1:length(basis_specialized_coeffs)
     )
     @debug "Evaluated basis" param_basis_specialized
+    @debug "Evaluated generators" generators_zp
     if !isgroebner(param_basis_specialized)
+        @debug "Not a basis!"
         return false
     end
     inclusion = normalform(param_basis_specialized, generators_zp)

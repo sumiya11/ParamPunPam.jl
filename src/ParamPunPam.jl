@@ -26,7 +26,6 @@ include("interpolation/cuyt-lee.jl")
 
 include("groebner/blackbox.jl")
 include("groebner/groebnerstate.jl")
-include("groebner/reconstruct.jl")
 include("groebner/modulartracker.jl")
 include("groebner/paramgb.jl")
 

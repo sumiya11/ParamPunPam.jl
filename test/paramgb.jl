@@ -110,6 +110,30 @@ end
     end
 end
 
+@testset "Multi-modular" begin
+    Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
+    R, (x1, x2, x3) =
+        PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
+    cases = [
+        [x2^2 + (3 // 23) * x2 + (4 // 25) * x3, x1 + 5 // 7],
+        [x1 + BigInt(2)^100, x2^2 - BigInt(2^31 + 1)^5],
+        [x1 + (2^20 * a + c) * x3 - 2^21 * b^2, x2 + 2^19],
+        [x1 + (2^40 * a + c) * x3 - 2^41 * b^2, x2 + 2^39],
+        [x1 + (BigInt(2)^80 * a + c) * x3 - BigInt(2)^81 * b^2, x2 + BigInt(2)^79],
+        [x2^2 - x2 + 1, (2^30) * x1 + (2^31 + 5) * x2]
+    ]
+    answers = [
+        [x1 + 5 // 7, x2^2 + (3 // 23) * x2 + (4 // 25) * x3],
+        [x1 + BigInt(2)^100, x2^2 - BigInt(2^31 + 1)^5],
+        [x2 + 2^19, x1 + (2^20 * a + c) * x3 - 2^21 * b^2],
+        [x2 + 2^39, x1 + (2^40 * a + c) * x3 - 2^41 * b^2],
+        [x2 + BigInt(2)^79, x1 + (BigInt(2)^80 * a + c) * x3 - BigInt(2)^81 * b^2],
+        [(2^30) * x1 + (2^31 + 5) * x2, x2^2 - x2 + 1]
+    ]
+    # test_paramgb(cases, answers)
+    @test_broken false
+end
+
 @testset "Noon" begin
     Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
     R, (x1, x2, x3) =

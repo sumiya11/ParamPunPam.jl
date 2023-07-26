@@ -15,6 +15,8 @@ Supported keyword arguments are:
   Possible options are `:CuytLee` and `:VanDerHoevenLecerf` (default).
 - `estimate_degrees`: If `true`, estimates the total degrees of parameters
   before starting the interpolation.
+- `assess_correctness`: If `true`, check that the basis is correct with high
+  probability. Default is false.
 
 ## Example
 
@@ -45,6 +47,7 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     estimate_degrees = get(kwargs, :estimate_degrees, true)
     rational_interpolator = get(kwargs, :rational_interpolator, :VanDerHoevenLecerf)
     polynomial_interpolator = get(kwargs, :polynomial_interpolator, :PrimesBenOrTiwari)
+    assess_correctness = get(kwargs, :assess_correctness, false)
     up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
     ord = ordering(parent(blackbox))
     # If no hint for degrees is given, then try to guess degrees
@@ -57,13 +60,15 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     @info """
     Computing parametric Groebner basis up to degrees $up_to_degree
     Ordering: $ord
-    Estimate degrees: $estimate_degrees
     Rational interpolator: $rational_interpolator
-    Polynomial interpolator: $polynomial_interpolator"""
+    Polynomial interpolator: $polynomial_interpolator
+    Estimate degrees: $estimate_degrees
+    Assess correctness: $assess_correctness"""
     _paramgb(
         blackbox,
         up_to_degree_,
         estimate_degrees,
+        assess_correctness,
         rational_interpolator,
         polynomial_interpolator
     )
@@ -78,6 +83,7 @@ function _paramgb(
     blackbox,
     up_to_degree,
     estimate_degrees,
+    assess_correctness,
     rational_interpolator,
     polynomial_interpolator
 )
@@ -101,7 +107,7 @@ function _paramgb(
     # This uses the currently accumulated bases modulo different primes to
     # recover the coefficients by the means of CRT and Rational number
     # reconstruction 
-    success = recover_coefficients!(state, modular)
+    success = recover_coefficients!(state, modular, assess_correctness)
     if !success
         find_next_lucky_prime!(modular)
         @goto InterpolateUsingOnePrime
@@ -405,7 +411,7 @@ function interpolate_param_exponents!(
     nothing
 end
 
-function recover_coefficients!(state, modular)
+function recover_coefficients!(state, modular, assess_correctness)
     @info "Recovering the coefficients.."
     reconstruct_crt!(state, modular)
     success = reconstruct_rational!(state, modular)
@@ -413,7 +419,10 @@ function recover_coefficients!(state, modular)
         @info "Rational reconstrction failed, selecting next prime.."
         return success
     end
-    success = assess_correctness(state, modular)
+    if !assess_correctness
+        return true
+    end
+    success = assess_correctness_mod_p(state, modular)
     if success
         @info "Success! Used $(length(modular.used_primes) + 1) prime in total"
     else
