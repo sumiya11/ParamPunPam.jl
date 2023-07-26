@@ -1,5 +1,7 @@
 ### ParamPunPam.jl - parametric Groebner bases.
 
+[![Runtests](https://github.com/sumiya11/ParamPunPam.jl/actions/workflows/Runtests.yml/badge.svg)](https://github.com/sumiya11/ParamPunPam.jl/actions/workflows/Runtests.yml)
+
 ### What is it?
 
 ParamPunPam.jl computes Groebner bases in $\mathbb{Q}(\mathbf{a})[\mathbf{x}]$, where $\mathbf{a}$ are treated as transcendental numbers.
