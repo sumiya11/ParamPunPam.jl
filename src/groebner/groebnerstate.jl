@@ -14,8 +14,9 @@ mutable struct GroebnerState{BB}
     param_basis::Any
     field_to_polys::Dict{Any, Any}
     context::Any
+    ordering::Any
 
-    function GroebnerState(blackbox::T) where {T <: AbstractBlackboxIdeal}
+    function GroebnerState(blackbox::T, ord) where {T <: AbstractBlackboxIdeal}
         Rx = parent(blackbox)
         Ra = parent_params(blackbox)
         params = gens(Ra)
@@ -32,7 +33,8 @@ mutable struct GroebnerState{BB}
             Dict(),
             nothing,
             Dict(),
-            nothing
+            nothing,
+            ord
         )
     end
 end

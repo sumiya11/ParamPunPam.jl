@@ -7,17 +7,20 @@ polynomials over a field of rational functions.
 
 The algorithm is probabilistic and succeeds with a high probability.
 
-Supported keyword arguments are:
+## Possible Options
 
-- `ordering`: monomial ordering.
+Supported keyword arguments:
+
+- `ordering`: monomial ordering. Same as for Groebner.jl, for example, `Lex` or
+  `DegRevLex`.
 - `up_to_degree`: Compute parameters up to a fixed total degree of
   numerators and denominators e.g., `up_to_degree=(2, 2)`.
 - `rational_interpolator`: The rational function interpolation algorithm.
   Possible options are `:CuytLee` and `:VanDerHoevenLecerf` (default).
 - `estimate_degrees`: If `true`, estimates the total degrees of parameters
-  before starting the interpolation.
+  before starting the interpolation. Default is `true`.
 - `assess_correctness`: If `true`, check that the basis is correct with high
-  probability. Default is false.
+  probability. Default is `false`.
 
 ## Example
 
@@ -49,7 +52,16 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     assess_correctness = get(kwargs, :assess_correctness, false)
     ordering = get(kwargs, :ordering, nothing)
     up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
-    ord = ordering(parent(blackbox))
+    ord = AbstractAlgebra.ordering(parent(blackbox))
+    if ordering === nothing
+        ordering = if ord === :lex
+            Lex()
+        elseif ord === :deglex
+            DegLex()
+        else
+            DegRevLex()
+        end
+    end
     # If no hint for degrees is given, then try to guess degrees
     if !haskey(kwargs, :up_to_degree)
         if !estimate_degrees
@@ -66,6 +78,7 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     Assess correctness: $assess_correctness"""
     _paramgb(
         blackbox,
+        ordering,
         up_to_degree_,
         estimate_degrees,
         assess_correctness,
@@ -81,6 +94,7 @@ progressbar_enabled() = Logging.min_enabled_level(current_logger()) >= Logging.I
 
 function _paramgb(
     blackbox,
+    ordering,
     up_to_degree,
     estimate_degrees,
     assess_correctness,
@@ -90,7 +104,7 @@ function _paramgb(
     # Keep track of modular computation related stuff
     modular = ModularTracker(blackbox)
     # Store the state of the computation
-    state = GroebnerState(blackbox)
+    state = GroebnerState(blackbox, ordering)
     # Discover the shape of the groebner basis:
     # its size, and the sizes of polynomials it contains
     discover_shape!(state, modular)
@@ -134,6 +148,7 @@ function discover_shape!(state, modular; η=2)
     iszero(η) && (@warn "Fixing the shape of the basis from 1 point is adventurous.")
     @info "Specializing at $(1 + η) points to guess the shape of the basis.."
     blackbox = state.blackbox
+    ord = state.ordering
     # Guess the shape for 1 lucky prime:
     reduce_mod_p!(blackbox, modular.ff)
     prog = ProgressUnknown(
@@ -147,12 +162,12 @@ function discover_shape!(state, modular; η=2)
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:(1 + η))
     polysspecmodp = map(point -> specialize_mod_p(blackbox, point), randompoints)
-    context, gb = groebner_learn(polysspecmodp[1], sweep=true)
+    context, gb = groebner_learn(polysspecmodp[1], ordering=ord)
     state.context = context
     bases = empty(polysspecmodp)
     for i in 1:length(polysspecmodp)
         F = polysspecmodp[i]
-        flag, gb = groebner_apply!(context, F, sweep=true)
+        flag, gb = groebner_apply!(context, F)
         update!(prog, i, spinner="⌜⌝⌟⌞", valuecolor=_progressbar_value_color)
         if !flag
             @warn "Unlucky cancellation of coefficients encountered"
@@ -181,6 +196,7 @@ is_tdeg_interpolated_heuristic(dD, DD, dN, DN) =
 function discover_param_total_degrees!(state, modular)
     @info "Specializing at random points to guess the total degrees in parameters.."
     blackbox = state.blackbox
+    ord = state.ordering
     Ru, _ = PolynomialRing(modular.ff, :u)
     K = base_ring(Ru)
     Rx = parent(blackbox)
@@ -235,7 +251,7 @@ function discover_param_total_degrees!(state, modular)
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(context, Ip, sweep=true)
+            flag, basis = groebner_apply!(context, Ip)
             update!(prog, idx, spinner="⌜⌝⌟⌞", valuecolor=_progressbar_value_color)
             # TODO: just select another batch of points, no need to throw
             !flag && __throw_unlucky_cancellation()
@@ -275,6 +291,7 @@ function interpolate_param_exponents!(
 ) where {InterpolatorType}
     @info "Interpolating the exponents in parameters.."
     blackbox = state.blackbox
+    ord = state.ordering
     reduce_mod_p!(blackbox, modular.ff)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
@@ -348,7 +365,7 @@ function interpolate_param_exponents!(
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(context, Ip, sweep=true)
+            flag, basis = groebner_apply!(context, Ip)
             update!(
                 prog,
                 idx,

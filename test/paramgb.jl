@@ -110,6 +110,47 @@ end
     end
 end
 
+@testset "Orderings" begin
+    Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
+    R, (x1, x2, x3) =
+        PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
+
+    f = [x2 + a, x1 + b, x3 + c]
+    gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex())
+    gb2 = ParamPunPam.paramgb(f, ordering=ParamPunPam.DegLex())
+    gb3 = ParamPunPam.paramgb(f, ordering=ParamPunPam.DegRevLex())
+    @test gb1 == gb2 == gb3 == ParamPunPam.paramgb(f)
+
+    gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x3, x2, x1))
+    @test gb1 == [x1 + b, x2 + a, x3 + c]
+
+    gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.DegRevLex(x3, x2, x1))
+    @test gb1 == [x1 + b, x2 + a, x3 + c]
+
+    for ord in [:lex, :deglex, :degrevlex]
+        Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
+        R, (x1, x2, x3) =
+            PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=ord)
+
+        cases = ([x1, x2, x3], [x1 + 2a, c * x2 + 3b, x3], [x1 + x2 + x3, x1 + x2, x1])
+        for (gb_ord, var_to_index) in [
+            (ParamPunPam.Lex(), Dict(x1 => 3, x2 => 2, x3 => 1)),
+            (ParamPunPam.DegLex(), Dict(x1 => 3, x2 => 2, x3 => 1)),
+            (ParamPunPam.DegRevLex(), Dict(x1 => 3, x2 => 2, x3 => 1)),
+            (ParamPunPam.Lex(x2, x1, x3), Dict(x1 => 2, x2 => 3, x3 => 1)),
+            (ParamPunPam.Lex(x3, x2, x1), Dict(x1 => 1, x2 => 2, x3 => 3))
+        ]
+            for case in cases
+                gb = ParamPunPam.paramgb(case, ordering=gb_ord)
+                for (rk, f) in enumerate(gb)
+                    m = Nemo.leading_monomial(f)
+                    @test rk == var_to_index[m]
+                end
+            end
+        end
+    end
+end
+
 @testset "Multi-modular" begin
     Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
     R, (x1, x2, x3) =
