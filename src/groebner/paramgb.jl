@@ -11,8 +11,8 @@ The algorithm is probabilistic and succeeds with a high probability.
 
 Supported keyword arguments:
 
-- `ordering`: monomial ordering. Same as for Groebner.jl, for example, `Lex` or
-  `DegRevLex`.
+- `ordering`: monomial ordering. Same as for Groebner.jl, for example, `Lex()` or
+  `DegRevLex()`.
 - `up_to_degree`: Compute parameters up to a fixed total degree of
   numerators and denominators e.g., `up_to_degree=(2, 2)`.
 - `rational_interpolator`: The rational function interpolation algorithm.
@@ -50,18 +50,9 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     rational_interpolator = get(kwargs, :rational_interpolator, :VanDerHoevenLecerf)
     polynomial_interpolator = get(kwargs, :polynomial_interpolator, :PrimesBenOrTiwari)
     assess_correctness = get(kwargs, :assess_correctness, false)
-    ordering = get(kwargs, :ordering, nothing)
+    ordering = get(kwargs, :ordering, Groebner.InputOrdering())
     up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
     ord = AbstractAlgebra.ordering(parent(blackbox))
-    if ordering === nothing
-        ordering = if ord === :lex
-            Lex()
-        elseif ord === :deglex
-            DegLex()
-        else
-            DegRevLex()
-        end
-    end
     # If no hint for degrees is given, then try to guess degrees
     if !haskey(kwargs, :up_to_degree)
         if !estimate_degrees
@@ -71,7 +62,7 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     end
     @info """
     Computing parametric Groebner basis up to degrees $up_to_degree
-    Ordering input / target: $ord / $(typeof(ordering))
+    Ordering, input / target: $ord / $(typeof(ordering))
     Rational interpolator: $rational_interpolator
     Polynomial interpolator: $polynomial_interpolator
     Estimate degrees: $estimate_degrees

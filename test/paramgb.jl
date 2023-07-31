@@ -1,3 +1,6 @@
+using Random
+
+Groebner = ParamPunPam.Groebner
 
 function test_paramgb(cases, answers; kwargs...)
     for (case, answer) in zip(cases, answers)
@@ -115,18 +118,29 @@ end
     R, (x1, x2, x3) =
         PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
 
+    f = [a * x1 - b * x2 + c * x3 - 1]
+    gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex())
+    @test gb1 == [x1 - (b // a) * x2 + (c // a) * x3 - 1 // a]
+    gb2 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x2, x1, x3))
+    @test gb2 == [-(a // b) * x1 + x2 - (c // b) * x3 + 1 // b]
+
     f = [x2 + a, x1 + b, x3 + c]
     gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex())
     gb2 = ParamPunPam.paramgb(f, ordering=ParamPunPam.DegLex())
     gb3 = ParamPunPam.paramgb(f, ordering=ParamPunPam.DegRevLex())
     @test gb1 == gb2 == gb3 == ParamPunPam.paramgb(f)
+    @test parent(gb1[1]) == R
 
     gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x3, x2, x1))
     @test gb1 == [x1 + b, x2 + a, x3 + c]
 
+    gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x2, x1, x3))
+    @test gb1 == [x3 + c, x1 + b, x2 + a]
+
     gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.DegRevLex(x3, x2, x1))
     @test gb1 == [x1 + b, x2 + a, x3 + c]
 
+    # The order of output persists
     for ord in [:lex, :deglex, :degrevlex]
         Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
         R, (x1, x2, x3) =
@@ -147,6 +161,36 @@ end
                     @test rk == var_to_index[m]
                 end
             end
+        end
+    end
+
+    # GB with no parameters coincides with the numerical GB
+    ord = :degrevlex
+    cases = [
+        Groebner.noonn(3, ordering=ord),
+        Groebner.noonn(4, ordering=ord),
+        Groebner.katsuran(3, ordering=ord),
+        Groebner.katsuran(3, ordering=ord),
+        Groebner.cyclicn(3, ordering=ord)
+    ]
+    for case in cases
+        Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
+        xs = gens(parent(case[1]))
+        (R, xs_frac) =
+            PolynomialRing(Nemo.FractionField(Rparam), map(repr, xs), ordering=ord)
+        gb_ords = []
+        append!(gb_ords, [Groebner.DegLex(), Groebner.DegLex()])
+        append!(gb_ords, [Groebner.DegLex(Random.shuffle(xs)) for _ in 1:10])
+        append!(gb_ords, [Groebner.DegRevLex(Random.shuffle(xs)) for _ in 1:10])
+        for gb_ord in gb_ords
+            case_frac = map(f -> evaluate(f, xs_frac), case)
+
+            gb_numeric = Groebner.groebner(case, ordering=gb_ord)
+            gb_parametric = ParamPunPam.paramgb(case_frac, ordering=gb_ord)
+
+            gb_numeric_frac = map(f -> evaluate(f, xs_frac), gb_numeric)
+
+            @test gb_numeric_frac == gb_parametric
         end
     end
 end

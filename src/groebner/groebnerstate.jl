@@ -121,7 +121,7 @@ function reconstruct_rational!(state, modular)
         coeffsrec = Vector{elem_type(Rparam_frac)}(undef, length(state.shape[i]))
         # skip reconstrction of the first coefficient, it is equal to one in the
         # reduced basis
-        for j in 2:length(param_coeffs_crt[i])
+        for j in 1:length(param_coeffs_crt[i])
             rec_coeffs = Vector{Rational{BigInt}}(undef, length(param_coeffs_crt[i][j][1]))
             for k in 1:length(param_coeffs_crt[i][j][1])
                 cz = param_coeffs_crt[i][j][1][k]
@@ -178,7 +178,6 @@ function reconstruct_rational!(state, modular)
             param_den = Rparam(rec_coeffs, exponent_vecs)
             coeffsrec[j] = param_num // param_den
         end
-        coeffsrec[1] = one(Rparam_frac)
         @debug "QQ-Reconstructed coefficients" coeffsrec
         polysreconstructed[i] =
             Rorig_frac(coeffsrec, map(e -> exponent_vector(e, 1), state.shape[i]))
