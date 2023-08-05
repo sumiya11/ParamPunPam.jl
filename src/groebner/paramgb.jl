@@ -153,12 +153,13 @@ function discover_shape!(state, modular; η=2)
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:(1 + η))
     polysspecmodp = map(point -> specialize_mod_p(blackbox, point), randompoints)
-    context, gb = groebner_learn(polysspecmodp[1], ordering=ord)
+    context, gb =
+        groebner_learn(polysspecmodp[1], ordering=ord, loglevel=groebner_loglevel())
     state.context = context
     bases = empty(polysspecmodp)
     for i in 1:length(polysspecmodp)
         F = polysspecmodp[i]
-        flag, gb = groebner_apply!(context, F)
+        flag, gb = groebner_apply!(context, F, loglevel=groebner_loglevel())
         update!(prog, i, spinner="⌜⌝⌟⌞", valuecolor=_progressbar_value_color)
         if !flag
             @warn "Unlucky cancellation of coefficients encountered"
@@ -242,7 +243,7 @@ function discover_param_total_degrees!(state, modular)
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(context, Ip)
+            flag, basis = groebner_apply!(context, Ip, loglevel=groebner_loglevel())
             update!(prog, idx, spinner="⌜⌝⌟⌞", valuecolor=_progressbar_value_color)
             # TODO: just select another batch of points, no need to throw
             !flag && __throw_unlucky_cancellation()
@@ -356,7 +357,7 @@ function interpolate_param_exponents!(
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(context, Ip)
+            flag, basis = groebner_apply!(context, Ip, loglevel=groebner_loglevel())
             update!(
                 prog,
                 idx,
