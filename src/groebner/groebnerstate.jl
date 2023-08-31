@@ -96,6 +96,57 @@ function reconstruct_crt!(state, modular)
     nothing
 end
 
+"""
+    rational_reconstruct_polynomial(ring, poly_ff)
+
+Reconstructs each coefficient of the given polynomial into rationals.
+Resulting polynomial lives in the given `ring`.
+
+Returns (success, poly_qq), where `success` is `true` if the reconstruction was
+successful and `false`, otherwise.
+"""
+function rational_reconstruct_polynomial(ring, poly_ff)
+    ff = base_ring(parent(poly_ff))
+    modulo = BigInt(characteristic(ff))
+    bnd = Groebner.rational_reconstruction_bound(modulo)
+    buf, buf1 = BigInt(), BigInt()
+    buf2, buf3 = BigInt(), BigInt()
+    u1, u2 = BigInt(), BigInt()
+    u3, v1 = BigInt(), BigInt()
+    v2, v3 = BigInt(), BigInt()
+    cfs_ff = collect(coefficients(poly_ff))
+    cfs_qq = map(_ -> Rational{BigInt}(0), cfs_ff)
+    cfs_rec = map(_ -> Nemo.QQ(0), cfs_ff)
+    evs = collect(exponent_vectors(poly_ff))
+    success = true
+    for i in 1:length(cfs_ff)
+        cz = BigInt(data(cfs_ff[i]))
+        cq = cfs_qq[i]
+        num, den = numerator(cq), denominator(cq)
+        success_ = Groebner.rational_reconstruction!(
+            num,
+            den,
+            bnd,
+            buf,
+            buf1,
+            buf2,
+            buf3,
+            u1,
+            u2,
+            u3,
+            v1,
+            v2,
+            v3,
+            cz,
+            modulo
+        )
+        cfs_rec[i] = Nemo.QQ(cfs_qq[i])
+        success = success && success_
+    end
+    poly_qq = ring(cfs_rec, evs)
+    return success, poly_qq
+end
+
 function reconstruct_rational!(state, modular)
     blackbox = state.blackbox
     Rorig = parent(blackbox)

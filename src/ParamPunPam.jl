@@ -29,7 +29,7 @@ include("groebner/groebnerstate.jl")
 include("groebner/modulartracker.jl")
 include("groebner/paramgb.jl")
 
-export paramgb
+export paramgb, linear_relations_between_normalforms_mqs
 export AbstractBlackboxIdeal, BasicBlackboxIdeal
 
 export Lex,

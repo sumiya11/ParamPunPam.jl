@@ -78,11 +78,6 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     )
 end
 
-# Progress bars
-const _progressbar_color = :cyan
-const _progressbar_value_color = :cyan # :light_grey
-progressbar_enabled() = Logging.min_enabled_level(current_logger()) >= Logging.Info
-
 function _paramgb(
     blackbox,
     ordering,
@@ -325,7 +320,6 @@ function interpolate_param_exponents!(
         end
     end
 
-    # TODO: check the feasibility of interpolation here!
     interpolator = InterpolatorType(Ru, Nd, Dd, Nds, Dds, Nt, Dt)
 
     J = 1

@@ -10,6 +10,7 @@ using ParamPunPam
     @includetests ["fields", "discrete-log", "div-and-conq", "fastgcd"]
     @includetests ["ben-or-tiwari", "interpolators"]
     @includetests ["blackbox"]
+    @includetests ["utils"]
     @includetests ["paramgb"]
     @includetests ["regressions"]
 end
