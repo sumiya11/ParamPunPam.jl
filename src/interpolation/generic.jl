@@ -1,5 +1,5 @@
 
-const _random_number_bound = 2^10-1
+const _random_number_bound = 2^10 - 1
 
 random_point(gf::Nemo.GaloisField) = rand(gf)
 random_point(gff::Nemo.GaloisFmpzField) = rand(gff)
@@ -29,11 +29,25 @@ function distinct_nonzero_points(field, L, prev=nothing)
     ans
 end
 
-homogenize(ring; varname="x0") = first(PolynomialRing(base_ring(ring), append!([varname], map(string, AbstractAlgebra.symbols(ring))), ordering=Nemo.ordering(ring)))
-dehomogenize(ring) = first(PolynomialRing(base_ring(ring), map(string, AbstractAlgebra.symbols(ring))[2:end], ordering=Nemo.ordering(ring)))
+homogenize(ring; varname="x0") = first(
+    PolynomialRing(
+        base_ring(ring),
+        append!([varname], map(string, AbstractAlgebra.symbols(ring))),
+        ordering=Nemo.ordering(ring)
+    )
+)
+dehomogenize(ring) = first(
+    PolynomialRing(
+        base_ring(ring),
+        map(string, AbstractAlgebra.symbols(ring))[2:end],
+        ordering=Nemo.ordering(ring)
+    )
+)
 
-univariatize(::Type{Ring}, ring; varname="x") where {Ring<:AbstractAlgebra.MPolyRing} = first(PolynomialRing(base_ring(ring), [varname]))
-univariatize(::Type{Ring}, ring; varname="x") where {Ring<:AbstractAlgebra.PolyRing} = first(PolynomialRing(base_ring(ring), varname))
+univariatize(::Type{Ring}, ring; varname="x") where {Ring <: AbstractAlgebra.MPolyRing} =
+    first(PolynomialRing(base_ring(ring), [varname]))
+univariatize(::Type{Ring}, ring; varname="x") where {Ring <: AbstractAlgebra.PolyRing} =
+    first(PolynomialRing(base_ring(ring), varname))
 
 function getboundsinfo(f)
     (
