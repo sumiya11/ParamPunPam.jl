@@ -8,8 +8,11 @@ function test_paramgb(cases, answers; kwargs...)
         gb = ParamPunPam.paramgb(case; kwargs...)
         @info "" case gb kwargs
         # Test that coefficients up to the given degrees coincide 
-        if haskey(kwargs, :up_to_degree)
+        if !haskey(kwargs, :up_to_degree)
+            @test gb == answer
+        else
             up_to_degree = get(kwargs, :up_to_degree, (0, 0))
+            # `get` always succeeds
             @assert !any(iszero.(up_to_degree))
             @test length(gb) == length(answer)
             for i in 1:length(gb)
@@ -18,13 +21,13 @@ function test_paramgb(cases, answers; kwargs...)
                     true_c = coeff(answer[i], j)
                     gb_c = coeff(gb[i], j)
                     dn, dd = map(total_degree, (numerator(true_c), denominator(true_c)))
-                    if all((dn, dd) .< up_to_degree)
+                    if all((dn, dd) .<= up_to_degree)
                         @test true_c == gb_c
+                    else
+                        @test isone(gb_c)
                     end
                 end
             end
-        else
-            @test gb == answer
         end
     end
 end
