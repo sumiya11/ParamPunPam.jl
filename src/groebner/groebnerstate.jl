@@ -22,7 +22,7 @@ mutable struct GroebnerState{BB}
         params = gens(Ra)
         polyvars = gens(Rx)
         K = base_ring(Ra)
-        @info "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
+        @debug "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
         new{T}(
             blackbox,
             Vector{Vector{gfp_mpoly}}(),
