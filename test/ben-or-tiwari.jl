@@ -5,6 +5,7 @@ R, (x1, x2, x3) = PolynomialRing(Nemo.GF(2^62 + 135), ["x1", "x2", "x3"])
 append!(
     cases,
     [
+        (poly=R(0), primes=true, kron=true),
         (poly=R(1), primes=true, kron=true),
         (poly=R(8), primes=true, kron=true),
         (poly=2 * x1, primes=true, kron=true),
@@ -14,6 +15,7 @@ append!(
         (poly=x1 * x3, primes=true, kron=true),
         (poly=x1 * x2 * x3, primes=true, kron=true),
         (poly=x1 + 8, primes=true, kron=true),
+        (poly=8x1 * x2 - 9x2 * x3 - 10, primes=true, kron=true),
         (poly=2x1 + 3x3 + 4x2 + 2, primes=true, kron=true),
         (poly=12321(x1 * x2)^5, primes=true, kron=true),
         (poly=x1^9 + 2x2^7 + 3x3^10, primes=true, kron=true)
@@ -47,7 +49,7 @@ append!(
     ]
 )
 
-@testset "Ben-or-Tiwari, Primes & Kronecker" begin
+@testset "Ben-or-Tiwari, Primes & Kronecker" failfast = true begin
     for interpolator in [ParamPunPam.PrimesBenOrTiwari, ParamPunPam.KronBenOrTiwari]
         R, (x1, x2, x3) = PolynomialRing(Nemo.GF(2^62 + 135), ["x1", "x2", "x3"])
         poly = 1x1^4 + 2x2 * x3 * x1^20 + 3x3 + 1
@@ -56,6 +58,7 @@ append!(
         ω = ParamPunPam.startingpoint(bot)
         ωs = map(i -> ω .^ i, 0:(2T - 1))
         ys = map(ω -> evaluate(poly, ω), ωs)
+        # test that no error is thrown
         ParamPunPam.interpolate!(bot, ωs, ys)
 
         for case in cases
@@ -69,35 +72,60 @@ append!(
             poly = case.poly
             R = parent(poly)
 
-            T = length(poly)
-            D = total_degree(poly)
+            T = max(1, length(poly))
+            D = max(total_degree(poly), 0)
 
             bot = interpolator(R, T, D)
             ω = ParamPunPam.startingpoint(bot)
             ωs = map(i -> ω .^ i, 0:(2T - 1))
             ys = map(ω -> evaluate(poly, ω), ωs)
-            @test ParamPunPam.interpolate!(bot, ωs, ys) == poly
+            success, interpolated = ParamPunPam.interpolate!(bot, ωs, ys)
+            @test success && interpolated == poly
 
             for _ in 1:3
                 # Test for the case when D is an upper bound
-                T = length(poly)
-                D = total_degree(poly)
+                T = max(1, length(poly))
+                D = max(total_degree(poly), 0)
                 D = D + rand(1:5)
                 bot = interpolator(R, T, D)
                 ω = ParamPunPam.startingpoint(bot)
                 ωs = map(i -> ω .^ i, 0:(2T - 1))
                 ys = map(ω -> evaluate(poly, ω), ωs)
-                @test ParamPunPam.interpolate!(bot, ωs, ys) == poly
+                success, interpolated = ParamPunPam.interpolate!(bot, ωs, ys)
+                @test success && interpolated == poly
 
                 # Test for the case when T is an upper bound
-                T = length(poly)
-                D = total_degree(poly)
+                T = max(1, length(poly))
+                D = max(total_degree(poly), 0)
                 T = T * rand(1:5) + rand(1:5)
                 bot = interpolator(R, T, D)
                 ω = ParamPunPam.startingpoint(bot)
                 ωs = map(i -> ω .^ i, 0:(2T - 1))
                 ys = map(ω -> evaluate(poly, ω), ωs)
-                @test ParamPunPam.interpolate!(bot, ωs, ys) == poly
+                success, interpolated = ParamPunPam.interpolate!(bot, ωs, ys)
+                @test success && interpolated == poly
+            end
+
+            # Test that interpolation may fail when the specified number of
+            # terms is too small 
+            begin
+                if interpolator == ParamPunPam.KronBenOrTiwari
+                    continue
+                end
+                poly = case.poly
+                R = parent(poly)
+
+                T = rand(0:length(poly)) + 1
+                if T >= length(poly)
+                    continue
+                end
+                D = max(total_degree(poly), 0)
+                bot = interpolator(R, T, D)
+                ω = ParamPunPam.startingpoint(bot)
+                ωs = map(i -> ω .^ i, 0:(2T - 1))
+                ys = map(ω -> evaluate(poly, ω), ωs)
+                success, interpolated = ParamPunPam.interpolate!(bot, ωs, ys)
+                @test (!success || success) && interpolated != poly
             end
         end
     end

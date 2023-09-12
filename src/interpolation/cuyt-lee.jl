@@ -195,6 +195,7 @@ function interpolate!(
     end
 
     @debug "" P_coeffs Q_coeffs
+    success = true
 
     for (
         cfs,
@@ -234,11 +235,13 @@ function interpolate!(
                 y_points[i] = y_points[i] - higher_contributions[i][deg + 1]
             end
 
-            interpolated[idx] = interpolate!(
+            success_i, poly = interpolate!(
                 polynomial_interpolator,
                 ωs[1:(2 * T_bound)],
                 y_points[1:(2 * T_bound)]
             )
+            interpolated[idx] = poly
+            success = success_i && success
 
             @debug "Interpolated $(interpolated[idx])"
             # update the contributions of higher degree term expansions 
@@ -272,5 +275,5 @@ function interpolate!(
         P = map_coefficients(c -> div(c, normalization_factor), P)
         Q = map_coefficients(c -> div(c, normalization_factor), Q)
     end
-    P, Q
+    success, P, Q
 end

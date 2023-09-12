@@ -11,6 +11,35 @@ const _prime_to_idx = Dict(_first_primes .=> 1:length(_first_primes))
 
 is_interpolation_feasible(D, K, n) = D * log(_first_primes[n]) < log(BigInt(order(K)))
 
+"""
+    PrimesBenOrTiwari
+
+An object for interpolating multivariate polynomials.
+Uses Ben-or and Tiwari algorithm with the prime-number approach.
+
+## Usage example
+
+```julia
+using Nemo
+R, (x1, x2, x3) = Nemo.GF(2^62 + 135)["x1", "x2", "x3"]
+
+poly = x1 * x2 + x2 * x3
+
+# the number of terms, total degree
+T, D = 2, 2
+
+interpolator = ParamPunPam.PrimesBenOrTiwari(R, T, D)
+ω = ParamPunPam.startingpoint(interpolator)
+
+# evaluations
+xs = map(i -> ω .^ i, 0:(2T - 1))
+ys = map(x -> evaluate(poly, x), xs)
+
+success, interpolated = ParamPunPam.interpolate!(interpolator, xs, ys)
+
+@assert success && interpolated == poly
+```
+"""
 mutable struct PrimesBenOrTiwari{Ring}
     # multivariate polynomial ring
     ring::Ring
@@ -84,7 +113,7 @@ function interpolate!(bot::PrimesBenOrTiwari, xs, ys)
     # assuming this is O(T logT^k logq^m) for some k and m, 
     # where q is the order of the base field
     mi = Nemo.roots(B)
-    any(iszero, mi) && return one(Rx)
+    any(iszero, mi) && return false, one(Rx)
     mi = map(inv, mi)
     # find the monomials of the interpolant,
     # O(TlogTlogq), where q is the order of the base field
@@ -96,7 +125,10 @@ function interpolate!(bot::PrimesBenOrTiwari, xs, ys)
     # O(M(T)logT).
     # t is the true number of terms
     t = min(T, length(monoms))
-    iszero(t) && return zero(Rx)
+    success = length(monoms) == length(mi)
+    success == success && (!iszero(t) || length(monoms) == length(mi))
+    (!success || iszero(t)) && return success, zero(Rx)
     coeffs = solve_transposed_vandermonde(Rz, view(mi, 1:t), view(ys, 1:t))
-    Rx(coeffs, monoms)
+    interpolated = Rx(coeffs, monoms)
+    success, interpolated
 end

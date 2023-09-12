@@ -36,16 +36,22 @@ end
     for interpolator in interpolators_to_test
         for param_ord in [:lex, :deglex, :degrevlex]
             for up_to_degree in [(Inf, Inf), (1, 1), (2, 2), (4, 4), (8, 8), (16, 16)]
-                Ra, (a,) = PolynomialRing(Nemo.QQ, ["a"], ordering=param_ord)
+                Ra, (a, b) = PolynomialRing(Nemo.QQ, ["a", "b"], ordering=param_ord)
                 Rx, (x, y, z) = PolynomialRing(
                     Nemo.FractionField(Ra),
                     ["x", "y", "z"],
                     ordering=:degrevlex
                 )
+                # test that invalid keyword arguments are reported.
+                # Notice `up_to_degreeS`.
+                @test_throws AssertionError ParamPunPam.paramgb([x], up_to_degrees=(3, 3))
+
                 cases = [
                     [x, x + a],
                     [(x + a)^2],
                     [x + a^2, x * y + a^10],
+                    [x^2 + a^3 + 1],
+                    [x^2 + a^2 + b^2 + a * b + 9],
                     [
                         x^2 - x + a * y^2 + a * z^2,
                         a * x * y + a * y * z - y,
@@ -56,6 +62,8 @@ end
                     [Rx(1)],
                     [(x + a)^2],
                     [y - a^8, x + a^2],
+                    [x^2 + a^3 + 1],
+                    [x^2 + a^2 + b^2 + a * b + 9],
                     [
                         x + a * y + a * z - 1,
                         y * z + (a^2 + a) // (a^2 + 1) * z^2 - 1 // (a^3 + a) * y -
@@ -159,6 +167,18 @@ end
         @test gb1 == [x1 - (b // a) * x2 + (c // a) * x3 - 1 // a]
         gb2 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x2, x1, x3))
         @test gb2 == [-(a // b) * x1 + x2 - (c // b) * x3 + 1 // b]
+
+        f = [
+            x1 - a * b^2 + a^2 * b + a^3 + b^3,
+            x3 - (a * b^3 + b * a^3)^3,
+            x2 - a * b^3 + a^2 * b + a^4 + b^4
+        ]
+        gb = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x3, x2, x1))
+        @test gb == [
+            x1 - a * b^2 + a^2 * b + a^3 + b^3,
+            x2 - a * b^3 + a^2 * b + a^4 + b^4,
+            x3 - (a * b^3 + b * a^3)^3
+        ]
 
         f = [x2 + a, x1 + b, x3 + c]
         gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex())

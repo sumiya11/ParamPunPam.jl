@@ -4,6 +4,35 @@
 # is the order of the ground field, then the interpolation succeeds when 
 #   D^n < K
 
+"""
+    KronBenOrTiwari
+
+An object for interpolating multivariate polynomials.
+Uses Ben-or and Tiwari algorithm with the Kronecker substitution approach.
+
+## Usage example
+
+```julia
+using Nemo
+R, (x1, x2, x3) = Nemo.GF(2^62 + 135)["x1", "x2", "x3"]
+
+poly = x1 * x2 + x2 * x3
+
+# the number of terms, total degree
+T, D = 2, 2
+
+interpolator = ParamPunPam.KronBenOrTiwari(R, T, D)
+ω = ParamPunPam.startingpoint(interpolator)
+
+# evaluations
+xs = map(i -> ω .^ i, 0:(2T - 1))
+ys = map(x -> evaluate(poly, x), xs)
+
+success, interpolated = ParamPunPam.interpolate!(interpolator, xs, ys)
+
+@assert success && interpolated == poly
+```
+"""
 mutable struct KronBenOrTiwari{Ring}
     # multivariate polynomial ring
     ring::Ring
@@ -91,6 +120,9 @@ function interpolate!(bot::KronBenOrTiwari, xs, ys)
     # O(M(T)logT).
     # t is the true number of terms
     t = min(T, length(mi))
+    if iszero(t)
+        return true, Rx(0)
+    end
     coeffs = solve_transposed_vandermonde(Rz, view(mi, 1:t), view(ys, 1:t))
-    Rx(coeffs, subsbackward(bot, monoms))
+    true, Rx(coeffs, subsbackward(bot, monoms))
 end

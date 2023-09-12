@@ -40,6 +40,15 @@ function paramgb(polys::Vector{T}; kwargs...) where {T}
     paramgb(BasicBlackboxIdeal(polys); kwargs...)
 end
 
+const _supported_kwargs = Set{Symbol}([
+    :up_to_degree,
+    :estimate_degrees,
+    :rational_interpolator,
+    :polynomial_interpolator,
+    :assess_correctness,
+    :ordering
+])
+
 """
     paramgb(blackbox) -> basis
 
@@ -47,6 +56,11 @@ Computes the Groebner basis of the ideal represented with the given `blackbox`.
 Admissible blackboxes are subtypes of `AbstractBlackboxIdeal`.
 """
 function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
+    for (k, _) in kwargs
+        @assert k in _supported_kwargs """
+        Keyword argument `$k` is not supported. 
+        Supported keyword arguments are: $(join(map(string, collect(_supported_kwargs)), ", "))"""
+    end
     up_to_degree = get(kwargs, :up_to_degree, (Inf, Inf))
     @assert all(up_to_degree .> 0) "Total degrees must be greater than 0"
     estimate_degrees = get(kwargs, :estimate_degrees, true)
@@ -346,20 +360,30 @@ function interpolate_param_exponents!(
     param_exponents =
         Vector{Vector{Tuple{elem_type(Ru), elem_type(Ru)}}}(undef, length(shape))
     coeffs = Vector{Vector{Vector{elem_type(K)}}}(undef, length(shape))
+    must_be_interpolated = Vector{Vector{Bool}}(undef, length(shape))
     for i in 1:length(shape)
         param_exponents[i] =
             Vector{Tuple{elem_type(Ru), elem_type(Ru)}}(undef, length(shape[i]))
         coeffs[i] = Vector{Vector{elem_type(K)}}(undef, length(shape[i]))
+        must_be_interpolated[i] = Vector{Bool}(undef, length(shape[i]))
         for j in 1:length(shape[i])
             coeffs[i][j] = Vector{elem_type(K)}(undef, npoints)
             param_exponents[i][j] = Ru(1), Ru(1)
+            must_be_interpolated[i][j] = true
+            if total_degrees[i][j][1] > up_to_degree[1] ||
+               total_degrees[i][j][2] > up_to_degree[2]
+                must_be_interpolated[i][j] = false
+            end
+            if total_degrees[i][j][1] == DEGREE_TOO_LARGE ||
+               total_degrees[i][j][2] == DEGREE_TOO_LARGE
+                must_be_interpolated[i][j] = false
+            end
         end
     end
 
     interpolator = InterpolatorType(Ru, Nd, Dd, Nds, Dds, Nt, Dt)
 
     J = 1
-    all_interpolated = false
     @debug """
     Interpolating for degrees:
     Numerator: $Nd, Denominator: $Dd"""
@@ -370,71 +394,118 @@ function interpolate_param_exponents!(
         enabled=progressbar_enabled(),
         color=_progressbar_color
     )
-    while !all_interpolated
-        all_interpolated = true
-
-        x_points = get_evaluation_points!(interpolator)
-        npoints = length(x_points)
-        Nt, Dt = div(npoints, 2), div(npoints, 2)
-        @debug "Using $npoints points.."
-
-        for i in 1:length(shape)
-            for j in 1:length(shape[i])
-                resize!(coeffs[i][j], npoints)
-            end
-        end
-
-        for idx in J:npoints
-            point = x_points[idx]
-            Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(gb_context, Ip, loglevel=groebner_loglevel())
-            update!(
-                prog,
-                idx,
-                spinner="⌜⌝⌟⌞",
-                showvalues=[(:Points, idx)],
-                valuecolor=_progressbar_value_color
+    attempts = 3
+    maybe_correct_basis = false
+    # The outer loop is governed by Schwarz-Zippel lemma.
+    # When the basis is correct with high probability, it halts.
+    while !maybe_correct_basis
+        # The inner loop is governed by several heuristics
+        if attempts <= 0
+            __throw_something_went_wrong(
+                """
+                Exceeded the maximum number of attempts to interpolate the basis. 
+                This should not happen normally.
+                Please consider submitting a Github issue."""
             )
-            !flag && __throw_unlucky_cancellation()
-            !check_shape(shape, basis) && __throw_unlucky_cancellation()
-
+        end
+        maybe_correct_basis = true
+        all_interpolated = false
+        while !all_interpolated
+            all_interpolated = true
+            x_points = get_evaluation_points!(interpolator)
+            npoints = length(x_points)
+            Nt, Dt = div(npoints, 2), div(npoints, 2)
+            @debug "Using $npoints points.."
             for i in 1:length(shape)
                 for j in 1:length(shape[i])
-                    coeffs[i][j][idx] = coeff(basis[i], j)
+                    resize!(coeffs[i][j], npoints)
                 end
             end
-        end
+            for idx in J:npoints
+                point = x_points[idx]
+                Ip = specialize_mod_p(blackbox, point)
+                flag, basis = groebner_apply!(gb_context, Ip, loglevel=groebner_loglevel())
+                update!(
+                    prog,
+                    idx,
+                    spinner="⌜⌝⌟⌞",
+                    showvalues=[(:Points, idx)],
+                    valuecolor=_progressbar_value_color
+                )
+                !flag && __throw_unlucky_cancellation()
+                !check_shape(shape, basis) && __throw_unlucky_cancellation()
+                for i in 1:length(shape)
+                    for j in 1:length(shape[i])
+                        coeffs[i][j][idx] = coeff(basis[i], j)
+                    end
+                end
+            end
 
-        for i in 1:length(shape)
-            !all_interpolated && break
-            for j in 1:length(shape[i])
-                if total_degrees[i][j][1] > up_to_degree[1] ||
-                   total_degrees[i][j][2] > up_to_degree[2]
+            for i in 1:length(shape)
+                !all_interpolated && break
+                for j in 1:length(shape[i])
+                    if !must_be_interpolated[i][j]
+                        continue
+                    end
+                    success, P, Q = interpolate!(interpolator, coeffs[i][j])
+                    if !success
+                        all_interpolated = false
+                        break
+                    end
+                    dp, dq = total_degree(P), total_degree(Q)
+                    if dp < total_degrees[i][j][1] || dq < total_degrees[i][j][2]
+                        all_interpolated = false
+                        break
+                    end
+                    # Check that the interpolated coefficient is correct with a high
+                    # probability
+                    c_true = coeffs[i][j][end]
+                    eval_point = x_points[end]
+                    c_interpolated = evaluate(P, eval_point) // evaluate(Q, eval_point)
+                    if !(c_true == c_interpolated)
+                        all_interpolated = false
+                        break
+                    end
+                    param_exponents[i][j] = (P, Q)
+                end
+            end
+            J = npoints + 1
+        end
+        # Check that the interpolated result is correct at a random point
+        random_point = distinct_nonzero_points(K, n)
+        Ip = specialize_mod_p(blackbox, random_point)
+        flag, gb_at_random_point =
+            groebner_apply!(gb_context, Ip, loglevel=groebner_loglevel())
+        # TODO: no need to throw here
+        !flag && __throw_unlucky_cancellation()
+        @debug """
+        Checking interpolated coefficients at a random points. 
+        Point: $random_point
+        Basis: $gb_at_random_point
+        Interpolated coeffs: $param_exponents
+        The number of eval. points: $npoints
+        Global index: $J"""
+        @inbounds for i in 1:length(shape)
+            if length(gb_at_random_point[i]) != length(param_exponents[i])
+                maybe_correct_basis = false
+            end
+            !maybe_correct_basis && break
+            for j in 1:length(gb_at_random_point[i])
+                if !must_be_interpolated[i][j]
                     continue
                 end
-                if total_degrees[i][j][1] == DEGREE_TOO_LARGE ||
-                   total_degrees[i][j][2] == DEGREE_TOO_LARGE
-                    continue
-                end
-                P, Q = interpolate!(interpolator, coeffs[i][j])
-                dp, dq = total_degree(P), total_degree(Q)
-                if dp < total_degrees[i][j][1] || dq < total_degrees[i][j][2]
-                    all_interpolated = false
+                gb_coeff = coeff(gb_at_random_point[i], j)
+                interpolated_num, interpolated_den = param_exponents[i][j]
+                evaluated_coeff =
+                    evaluate(interpolated_num, random_point) //
+                    evaluate(interpolated_den, random_point)
+                if gb_coeff != evaluated_coeff
+                    maybe_correct_basis = false
                     break
                 end
-                # Check that the interpolated coefficient is correct with a high
-                # probability
-                c_true = coeffs[i][j][end]
-                eval_point = x_points[end]
-                c_interpolated = evaluate(P, eval_point) // evaluate(Q, eval_point)
-                if !(c_true == c_interpolated)
-                    all_interpolated = false
-                    break
-                end
-                param_exponents[i][j] = (P, Q)
             end
         end
-        J = npoints + 1
+        attempts -= 1
     end
     finish!(prog)
     state.param_exponents = param_exponents

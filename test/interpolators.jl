@@ -54,8 +54,8 @@ evalfrac(f, x) = evaluate(numerator(f), x) // evaluate(denominator(f), x)
             vdhl = rational_interpolator(R, Nd, Dd, Nds, Dds, Nt, Dt)
             xs = ParamPunPam.get_evaluation_points!(vdhl)
             ys = map(x -> evalfrac(case, x), xs)
-            P, Q = ParamPunPam.interpolate!(vdhl, ys)
-            @test P // Q == case
+            success, P, Q = ParamPunPam.interpolate!(vdhl, ys)
+            @test success && P // Q == case
 
             # Check that direct interpolation with small T fails
             if rational_interpolator == ParamPunPam.VanDerHoevenLecerf
@@ -64,7 +64,7 @@ evalfrac(f, x) = evaluate(numerator(f), x) // evaluate(denominator(f), x)
                     vdhl = rational_interpolator(R, Nd, Dd, Nds, Dds, Nt, Dt)
                     xs = ParamPunPam.get_evaluation_points!(vdhl)
                     ys = map(x -> evalfrac(case, x), xs)
-                    P, Q = ParamPunPam.interpolate!(vdhl, ys)
+                    success, P, Q = ParamPunPam.interpolate!(vdhl, ys)
                     @test total_degree(P) < total_degree(numerator(case)) ||
                           total_degree(Q) < total_degree(denominator(case)) ||
                           length(P) < length(numerator(case)) ||
@@ -91,7 +91,7 @@ evalfrac(f, x) = evaluate(numerator(f), x) // evaluate(denominator(f), x)
                     all_interpolated = true
                     xs = ParamPunPam.get_evaluation_points!(interpolator)
                     ys = map(x -> evalfrac(new_case, x), xs)
-                    P, Q = ParamPunPam.interpolate!(interpolator, ys)
+                    success, P, Q = ParamPunPam.interpolate!(interpolator, ys)
                     dp, dq = total_degree(P), total_degree(Q)
                     if dp < total_degree(numerator(new_case)) ||
                        dq < total_degree(denominator(new_case)) ||
@@ -100,7 +100,7 @@ evalfrac(f, x) = evaluate(numerator(f), x) // evaluate(denominator(f), x)
                         all_interpolated = false
                     end
                 end
-                @test P // Q == new_case
+                @test success && P // Q == new_case
             end
         end
     end

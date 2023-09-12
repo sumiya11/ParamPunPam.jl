@@ -194,8 +194,12 @@ function interpolate!(
     end
     # Interpolate the leading coefficients in the numerator and denominator
     # M(T)logT
-    num = interpolate!(Ni, ωs[1:(2 * Nt)], Nys[1:(2 * Nt)])
-    den = interpolate!(Di, ωs[1:(2 * Dt)], Dys[1:(2 * Dt)])
+    success_num, num = interpolate!(Ni, ωs[1:(2 * Nt)], Nys[1:(2 * Nt)])
+    success_den, den = interpolate!(Di, ωs[1:(2 * Dt)], Dys[1:(2 * Dt)])
+    success = success_num && success_den
+    if !success
+        return success, one(R), one(R)
+    end
     # backward dilation,
     # substitute (x0,x1,x2,...xn) = (inv(d0)x0,inv(d1)x1,...,inv(dn)xn)
     # n*log(q), and T
@@ -214,5 +218,5 @@ function interpolate!(
         num = map_coefficients(c -> div(c, normalization_factor), num)
         den = map_coefficients(c -> div(c, normalization_factor), den)
     end
-    num, den
+    success, num, den
 end

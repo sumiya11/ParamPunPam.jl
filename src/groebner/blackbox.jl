@@ -22,6 +22,9 @@ abstract type AbstractBlackboxIdeal end
 @noinline __throw_unlucky_cancellation() =
     throw(AssertionError("Unlucky cancellation of coefficients!"))
 
+@noinline __throw_something_went_wrong(msg) =
+    throw(AssertionError("Something went wrong when computing Groebner bases.\n$msg"))
+
 mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
     polys::Vector{PolyQQX}
     polys_mod_p::Any
