@@ -21,7 +21,7 @@ treebase(tree) = length(first(tree))
 # O(M(n)), n = length(xs)
 function buildproducttree(z::T, xs) where {T}
     n = length(xs)
-    @assert n > 0  
+    @assert n > 0
     npow = nextpow(2, n)
     k = round(Int, log(2, npow)) + 1
     tree = Vector{Vector{T}}(undef, k)
@@ -29,14 +29,14 @@ function buildproducttree(z::T, xs) where {T}
     @inbounds for i in 1:n
         tree[1][i] = z - xs[i]
     end
-    @inbounds for i in n+1:npow
+    @inbounds for i in (n + 1):npow
         tree[1][i] = one(z)
     end
     @inbounds for i in 2:k
-        nel = 2^(k-i)
+        nel = 2^(k - i)
         tree[i] = Vector{T}(undef, nel)
         for j in 1:nel
-            tree[i][j] = tree[i-1][2*j-1] * tree[i-1][2*j]
+            tree[i][j] = tree[i - 1][2 * j - 1] * tree[i - 1][2 * j]
         end
     end
     tree
@@ -48,7 +48,7 @@ function _remindertree!(f, rtree, ptree, depth, idx)
         rtree[idx] = coeff(mod(f, ptree[1][idx]), 0)
         return rtree
     end
-    l, r = 2*idx - 1, 2*idx
+    l, r = 2 * idx - 1, 2 * idx
     @inbounds r0 = mod(f, ptree[depth][l])
     @inbounds r1 = mod(f, ptree[depth][r])
     _remindertree!(r0, rtree, ptree, depth - 1, l)
@@ -107,14 +107,14 @@ function _lagrangetree(z, ys, ptree, depth, idx)
     if depth == 0
         return R(ys[idx])
     end
-    l, r = 2*idx - 1, 2*idx
+    l, r = 2 * idx - 1, 2 * idx
     r0 = _lagrangetree(z, ys, ptree, depth - 1, l)
     r1 = _lagrangetree(z, ys, ptree, depth - 1, r)
     r0 * ptree[depth][r] + r1 * ptree[depth][l]
 end
 
 function lagrangetree(z, ys, ptree)
-    _lagrangetree(z, ys, ptree, treedepth(ptree) - 1, 1) 
+    _lagrangetree(z, ys, ptree, treedepth(ptree) - 1, 1)
 end
 
 # Returns a unique univariate polynomial f in the ring R,
@@ -131,7 +131,7 @@ function fastpolyinterpolate(R, xs, ys)
     si = remindertree(dm, ptree)
     ysi = zeros(base_ring(R), nextpow(2, length(ys)))
     for i in 1:length(ys)
-        ysi[i] = ys[i]*inv(si[i])
+        ysi[i] = ys[i] * inv(si[i])
     end
     # O(M(n)logn)
     lagrangetree(z, ysi, ptree)

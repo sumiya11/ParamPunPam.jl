@@ -52,18 +52,21 @@ function learn_and_apply(polys)
 end
 
 reduce_mod_p(f, FF) = map_coefficients(c -> FF(numerator(c)) // FF(denominator(c)), f)
-specialize(f, point) = map_coefficients(c -> evaluate(numerator(c), point) // evaluate(denominator(c), point), f)
+specialize(f, point) = map_coefficients(
+    c -> evaluate(numerator(c), point) // evaluate(denominator(c), point),
+    f
+)
 
 mutable struct ComputationGraph{Poly}
     polys::Vector{Poly}
     # Adjacency list. A node in the graph is a polynomial. A node is represented
     # with an Int, an index into the polys array. 
-    adjlist::Dict{Int,Vector{Int}}
+    adjlist::Dict{Int, Vector{Int}}
     # Edge --> Some info
-    metadata::Dict{NTuple{2,Int},Vector{Any}}
+    metadata::Dict{NTuple{2, Int}, Vector{Any}}
     function ComputationGraph(polys::Vector{Poly}) where {Poly}
-        adjlist = Dict{Int,Vector{Int}}()
-        metadata = Dict{NTuple{2,Int},Vector{Any}}()
+        adjlist = Dict{Int, Vector{Int}}()
+        metadata = Dict{NTuple{2, Int}, Vector{Any}}()
         new{Poly}(polys, adjlist, metadata)
     end
 end
@@ -81,7 +84,7 @@ function clean!(graph)
     for (k, v) in graph.adjlist
         graph.adjlist[k] = append!([graph.adjlist[k][1]], unique(graph.adjlist[k][2:end]))
     end
-    nothing    
+    nothing
 end
 
 function spolynomial(f, g)
@@ -124,7 +127,7 @@ function select_using_normal_strategy!(basis, critical_pairs)
 end
 
 function update!(critical_pairs, basis, j)
-    for i in 1:j-1
+    for i in 1:(j - 1)
         push!(critical_pairs, (i, j))
         # if buchberger_criterion(basis, critical_pairs, i, j)
         #     critical_pairs[end] = (0, 0)
@@ -155,7 +158,7 @@ end
 function learn!(polys)
     # The classic Buchberger algorithm, but records the graph of computations
     sort!(polys, by=leading_monomial)
-    critical_pairs = Vector{NTuple{2,Int}}()
+    critical_pairs = Vector{NTuple{2, Int}}()
     basis = empty(polys)
     for poly in polys
         push!(basis, poly)
@@ -167,7 +170,8 @@ function learn!(polys)
         (i, j) = select_using_normal_strategy!(basis, critical_pairs)
         buchberger_criterion(basis, critical_pairs, i, j) && continue
         # staircase_criterion(basis, critical_pairs, i, j) && continue
-        (iszero(d % 10)) && (@info "Critical pair of degree $(lcm_deg(i, j, basis)), pairs left: $(length(critical_pairs))")
+        (iszero(d % 10)) &&
+            (@info "Critical pair of degree $(lcm_deg(i, j, basis)), pairs left: $(length(critical_pairs))")
         spoly = spolynomial(basis[i], basis[j])
         nf, path = normalform(spoly, basis)
         iszero(nf) && continue
@@ -193,7 +197,7 @@ function apply!(graph, polys)
     @info "Input: $m polynomials, DParamPunPamred basis: $n polynomials"
     @info "Unwinding the computation graph.."
     metadata = deepcopy(graph.metadata)
-    for i in m+1:n
+    for i in (m + 1):n
         @info "Constructing element $i"
         # Construct the new polynomial from the polynomials basis[1:i-1]
         f = zero(R)
@@ -218,14 +222,14 @@ function apply!(graph, polys)
     updated = false
     for i in 2:length(basis)
         iszero(basis[i]) && continue
-        for j in 1:i-1
+        for j in 1:(i - 1)
             iszero(basis[j]) && continue
             q, r = divrem(basis[i], basis[j])
             basis[i] = r
             updated = updated || !iszero(q)
         end
     end
-    updated && @goto Letsgo 
+    updated && @goto Letsgo
     basis, graph
 end
 
@@ -266,21 +270,15 @@ end
 # Over QQ(a...)
 begin
     Rparam, (a, b) = PolynomialRing(Nemo.QQ, ["a", "b"])
-    R, (x, y, z) = PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
-    F = [
-        x^2 + x + (a + 1)^5,
-        x * y + b * y * z + 1 // (a * b)^12,
-        x * z + z + b
-    ]
+    R, (x, y, z) =
+        PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
+    F = [x^2 + x + (a + 1)^5, x * y + b * y * z + 1 // (a * b)^12, x * z + z + b]
     gb, graph = learn_and_apply(F)
 
-    Rparam, (a, b) = PolynomialRing(Nemo.GF(2^31-1), ["a", "b"])
-    R, (x, y, z) = PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
-    F = [
-        x^2 + x + (a + 1)^5,
-        x * y + b * y * z + 1 // (a * b)^12,
-        x * z + z + b
-    ]
+    Rparam, (a, b) = PolynomialRing(Nemo.GF(2^31 - 1), ["a", "b"])
+    R, (x, y, z) =
+        PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
+    F = [x^2 + x + (a + 1)^5, x * y + b * y * z + 1 // (a * b)^12, x * z + z + b]
     gb, graph = learn_and_apply(F)
     # also correct
 end;
@@ -300,16 +298,334 @@ end;
 # end;
 
 begin
-    Ra, (beta, gamma, v, psi) = PolynomialRing(Nemo.GF(2^31-1), ["beta", "gamma", "v", "psi"])
-    R, (t, y1, y2, y3, y4) = PolynomialRing(Nemo.FractionField(Ra), ["t", "y1","y2","y3","y4"],ordering=:degrevlex)
-    
-    SEIR_1_io = [(-beta*gamma*psi + 2*beta*gamma + beta*v + beta*psi)*y2^3*y4^2 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y4^2 + (gamma^3*psi^2 - gamma^3*psi - gamma^2*v*psi - gamma^2*psi^2)*y1*y2*y4 + (-2*gamma^3*psi^2 + 2*gamma^3*psi + 2*gamma^2*v*psi + 2*gamma^2*psi^2)*y1*y2 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y3 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y4, (-2*beta*gamma*psi + 4*beta*gamma + 2*beta*v + 2*beta*psi)*y2^3*y4^2 + (2*gamma^2*psi^2 - 2*gamma^2*psi - 2*gamma*v*psi - 2*gamma*psi^2)*y1*y2^2*y4 + (2*beta*gamma*psi - 4*beta*gamma - 2*beta*v - 2*beta*psi)*y2^3*y4 + (2*beta*gamma*psi - 4*beta*gamma - 2*beta*v - 2*beta*psi)*y2^2*y3*y4 + (2*beta*gamma*psi - 4*beta*gamma - 2*beta*v - 2*beta*psi)*y2^2*y4^2 + (-4*gamma^2*psi^2 + 4*gamma^2*psi + 4*gamma*v*psi + 4*gamma*psi^2)*y1*y2^2 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2*y3 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2*y4, 0, y2^3*y4^2 - y2^3*y4 - y2^2*y3*y4 - y2^2*y4^2 + (-gamma^3*psi + gamma^3 + gamma^2*v + gamma^2*psi)*y4, -y2^3*y4^2 + y2^3*y4 + y2^2*y3*y4 + y2^2*y4^2 + (gamma^3*psi - gamma^3 - gamma^2*v - gamma^2*psi)*y4, beta*y2^3*y4^2 - beta*y2^3*y4 - beta*y2^2*y3*y4 - beta*y2^2*y4^2 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^2, y2^3*y4^2 - y2^3*y4 - y2^2*y3*y4 - y2^2*y4^2 + (-gamma^2*psi + gamma^2 + gamma*v + gamma*psi)*y2*y4, -y2^3*y4^2 + y2^3*y4 + y2^2*y3*y4 + y2^2*y4^2 + gamma^2*y2*y4^2 - 
-    gamma^2*y2*y4 - gamma^2*y3*y4 - gamma^2*y4^2, (gamma*psi^2 - gamma*psi - v*psi - psi^2)*y1*y2^3*y4 + (-beta*gamma*psi + 2*beta*gamma + beta*v + beta*psi)*y2^3*y4^2 + (-2*gamma*psi^2 + 2*gamma*psi + 2*v*psi + 2*psi^2)*y1*y2^3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^2*y3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^2*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y3*y4 + (beta*gamma*psi - 2*beta*gamma - beta*v - beta*psi)*y2^2*y4^2, (2*gamma^2*psi^2 - 2*gamma^2*psi - 2*gamma*v*psi - 2*gamma*psi^2)*y1*y2^3*y4 + (3*gamma^2*psi^2 - 3*gamma^2*psi - 3*gamma*v*psi - 3*gamma*psi^2)*y1*y2^2*y3*y4 + (-2*beta*gamma^2*psi + 2*beta*gamma^2 - 3*beta*gamma*v*psi + 5*beta*gamma*v + 2*beta*gamma*psi + 3*beta*v*psi)*y2^3*y4^2 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2^3 + (-5*gamma^2*psi^2 + 5*gamma^2*psi + 5*gamma*v*psi + 5*gamma*psi^2)*y1*y2^2*y3 + (-2*gamma^2*psi^2 + 
-    2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2^2*y4 + (2*beta*gamma^2*psi - 2*beta*gamma^2 + 3*beta*gamma*v*psi - 5*beta*gamma*v - 2*beta*gamma*psi - 3*beta*v*psi)*y2^3*y4 + 
-    (-3*gamma^2*psi^2 + 3*gamma^2*psi + 3*gamma*v*psi + 3*gamma*psi^2)*y1*y2*y3*y4 + (2*beta*gamma^2*psi - 2*beta*gamma^2 + 3*beta*gamma*v*psi - 5*beta*gamma*v - 2*beta*gamma*psi - 3*beta*v*psi)*y2^2*y3*y4 + (2*beta*gamma^2*psi - 2*beta*gamma^2 + 3*beta*gamma*v*psi - 5*beta*gamma*v - 2*beta*gamma*psi - 3*beta*v*psi)*y2^2*y4^2, (-gamma*psi + 2*gamma + v + psi)*y2^3*y4^2 + (gamma*psi - 2*gamma - v - psi)*y2^3*y4 + (gamma*psi - 2*gamma - v - psi)*y2^2*y3*y4 + (gamma^2*psi - gamma^2 - gamma*v - 2*gamma - v - psi)*y2^2*y4^2 + (-2*gamma^2*psi + 2*gamma^2 + 2*gamma*v + 2*gamma*psi)*y2^2*y4 + (-gamma^2*psi + gamma^2 + gamma*v + gamma*psi)*y2*y3*y4 + (-gamma^2*psi + gamma^2 + gamma*v + gamma*psi)*y2*y4^2, (gamma*psi^2 - gamma*psi - v*psi - psi^2)*y1*y2^4*y3*y4 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^4*y3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^3*y3*y4 + (-beta*gamma^2*v*psi + beta*gamma^2*v + beta*gamma*v*psi)*y2^3*y4^2 + (beta*gamma^2*v*psi - beta*gamma^2*v - beta*gamma*v*psi)*y2^3*y4 + (beta*gamma^2*v*psi - beta*gamma^2*v - beta*gamma*v*psi)*y2^2*y3*y4 + (beta*gamma^2*v*psi - beta*gamma^2*v - beta*gamma*v*psi)*y2^2*y4^2, (gamma*psi - 2*gamma - v - psi)*y2^3*y4^2 + (-gamma*psi + 2*gamma + v + psi)*y2^3*y4 + (-gamma*psi + 2*gamma + v + psi)*y2^2*y3*y4 + (-gamma^2*psi + gamma^2 + gamma*v + 2*gamma + v + psi)*y2^2*y4^2 + 
-    (2*gamma^2*psi - 2*gamma^2 - 2*gamma*v - 2*gamma*psi)*y2^2*y4 + (gamma^2*psi - gamma^2 - gamma*v - gamma*psi)*y2*y3*y4 + (gamma^2*psi - gamma^2 - gamma*v - gamma*psi)*y2*y4^2, (gamma*psi - 2*gamma - v - psi)*y2^3*y4^2 + (-gamma*psi + 2*gamma + v + psi)*y2^3*y4 + (-gamma*psi + 2*gamma + v + psi)*y2^2*y3*y4 + (-gamma*psi + 2*gamma + v + psi)*y2^2*y4^2 + (-gamma^3*psi + gamma^3 + gamma^2*v + gamma^2*psi)*y2*y4^2 + (2*gamma^3*psi - 2*gamma^3 - 2*gamma^2*v - 2*gamma^2*psi)*y2*y4 + (gamma^3*psi - gamma^3 - gamma^2*v - gamma^2*psi)*y3*y4 + (gamma^3*psi - gamma^3 - gamma^2*v - gamma^2*psi)*y4^2, (-beta*gamma^2*psi + beta*gamma^2 - beta*gamma*v*psi + 2*beta*gamma*v + beta*gamma*psi + beta*v*psi)*y2^3*y4^2 + (gamma^3*psi^2 - gamma^3*psi - gamma^2*v*psi - gamma^2*psi^2)*y1*y2^2*y4 + (beta*gamma^2*psi - beta*gamma^2 + beta*gamma*v*psi - 2*beta*gamma*v - beta*gamma*psi - beta*v*psi)*y2^3*y4 + (gamma^3*psi^2 - gamma^3*psi - gamma^2*v*psi - gamma^2*psi^2)*y1*y2*y3*y4 + (beta*gamma^2*psi - beta*gamma^2 + beta*gamma*v*psi - 2*beta*gamma*v - beta*gamma*psi - beta*v*psi)*y2^2*y3*y4 + (beta*gamma^2*psi - beta*gamma^2 + beta*gamma*v*psi - 2*beta*gamma*v - beta*gamma*psi - 
-    beta*v*psi)*y2^2*y4^2 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y2^2 + (-2*gamma^3*psi^2 + 2*gamma^3*psi + 2*gamma^2*v*psi + 2*gamma^2*psi^2)*y1*y2*y3 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y2*y4 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1*y3*y4, beta*y2^3*y4^2 - beta*y2^3*y4 - beta*y2^2*y3*y4 - beta*y2^2*y4^2 + (-gamma^3*psi^2 + gamma^3*psi + gamma^2*v*psi + gamma^2*psi^2)*y1, (gamma*psi^2 - gamma*psi - v*psi - psi^2)*y1*y2^4*y4 + (3*gamma*psi^2 - 3*gamma*psi - 3*v*psi - 3*psi^2)*y1*y2^3*y3*y4 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^4 + (-4*gamma*psi^2 + 4*gamma*psi + 4*v*psi + 4*psi^2)*y1*y2^3*y3 + (-gamma*psi^2 + gamma*psi + v*psi + psi^2)*y1*y2^3*y4 + (-3*gamma*psi^2 + 3*gamma*psi + 3*v*psi + 3*psi^2)*y1*y2^2*y3*y4 + (-beta*gamma^2*psi + beta*gamma^2 - 3*beta*gamma*v*psi + 4*beta*gamma*v + beta*gamma*psi + 3*beta*v*psi)*y2^3*y4^2 + (beta*gamma^2*psi - beta*gamma^2 + 3*beta*gamma*v*psi - 4*beta*gamma*v - beta*gamma*psi - 3*beta*v*psi)*y2^3*y4 + (beta*gamma^2*psi - beta*gamma^2 + 3*beta*gamma*v*psi - 4*beta*gamma*v - beta*gamma*psi - 3*beta*v*psi)*y2^2*y3*y4 + (beta*gamma^2*psi - beta*gamma^2 + 3*beta*gamma*v*psi - 4*beta*gamma*v - beta*gamma*psi - 3*beta*v*psi)*y2^2*y4^2, 2*beta*y2^3*y4^2 - 2*beta*y2^3*y4 - 2*beta*y2^2*y3*y4 - 2*beta*y2^2*y4^2 + (-2*gamma^2*psi^2 + 2*gamma^2*psi + 2*gamma*v*psi + 2*gamma*psi^2)*y1*y2, y2^4*y4^2 - y2^4*y4 - y2^3*y3*y4 + (-gamma - 1)*y2^3*y4^2 + gamma*y2^3*y4 + gamma*y2^2*y3*y4 + gamma*y2^2*y4^2, -t*y2^3*y4^2 + t*y2^3*y4 + t*y2^2*y3*y4 + t*y2^2*y4^2 + 1]
-    
+    Ra, (beta, gamma, v, psi) =
+        PolynomialRing(Nemo.GF(2^31 - 1), ["beta", "gamma", "v", "psi"])
+    R, (t, y1, y2, y3, y4) = PolynomialRing(
+        Nemo.FractionField(Ra),
+        ["t", "y1", "y2", "y3", "y4"],
+        ordering=:degrevlex
+    )
+
+    SEIR_1_io = [
+        (-beta * gamma * psi + 2 * beta * gamma + beta * v + beta * psi) * y2^3 * y4^2 +
+        (beta * gamma * psi - 2 * beta * gamma - beta * v - beta * psi) * y2^3 * y4 +
+        (beta * gamma * psi - 2 * beta * gamma - beta * v - beta * psi) * y2^2 * y3 * y4 +
+        (beta * gamma * psi - 2 * beta * gamma - beta * v - beta * psi) * y2^2 * y4^2 +
+        (gamma^3 * psi^2 - gamma^3 * psi - gamma^2 * v * psi - gamma^2 * psi^2) *
+        y1 *
+        y2 *
+        y4 +
+        (
+            -2 * gamma^3 * psi^2 +
+            2 * gamma^3 * psi +
+            2 * gamma^2 * v * psi +
+            2 * gamma^2 * psi^2
+        ) *
+        y1 *
+        y2 +
+        (-gamma^3 * psi^2 + gamma^3 * psi + gamma^2 * v * psi + gamma^2 * psi^2) * y1 * y3 +
+        (-gamma^3 * psi^2 + gamma^3 * psi + gamma^2 * v * psi + gamma^2 * psi^2) * y1 * y4,
+        (-2 * beta * gamma * psi + 4 * beta * gamma + 2 * beta * v + 2 * beta * psi) *
+        y2^3 *
+        y4^2 +
+        (
+            2 * gamma^2 * psi^2 - 2 * gamma^2 * psi - 2 * gamma * v * psi -
+            2 * gamma * psi^2
+        ) *
+        y1 *
+        y2^2 *
+        y4 +
+        (2 * beta * gamma * psi - 4 * beta * gamma - 2 * beta * v - 2 * beta * psi) *
+        y2^3 *
+        y4 +
+        (2 * beta * gamma * psi - 4 * beta * gamma - 2 * beta * v - 2 * beta * psi) *
+        y2^2 *
+        y3 *
+        y4 +
+        (2 * beta * gamma * psi - 4 * beta * gamma - 2 * beta * v - 2 * beta * psi) *
+        y2^2 *
+        y4^2 +
+        (
+            -4 * gamma^2 * psi^2 +
+            4 * gamma^2 * psi +
+            4 * gamma * v * psi +
+            4 * gamma * psi^2
+        ) *
+        y1 *
+        y2^2 +
+        (
+            -2 * gamma^2 * psi^2 +
+            2 * gamma^2 * psi +
+            2 * gamma * v * psi +
+            2 * gamma * psi^2
+        ) *
+        y1 *
+        y2 *
+        y3 +
+        (
+            -2 * gamma^2 * psi^2 +
+            2 * gamma^2 * psi +
+            2 * gamma * v * psi +
+            2 * gamma * psi^2
+        ) *
+        y1 *
+        y2 *
+        y4,
+        0,
+        y2^3 * y4^2 - y2^3 * y4 - y2^2 * y3 * y4 - y2^2 * y4^2 +
+        (-gamma^3 * psi + gamma^3 + gamma^2 * v + gamma^2 * psi) * y4,
+        -y2^3 * y4^2 +
+        y2^3 * y4 +
+        y2^2 * y3 * y4 +
+        y2^2 * y4^2 +
+        (gamma^3 * psi - gamma^3 - gamma^2 * v - gamma^2 * psi) * y4,
+        beta * y2^3 * y4^2 - beta * y2^3 * y4 - beta * y2^2 * y3 * y4 - beta * y2^2 * y4^2 +
+        (-gamma * psi^2 + gamma * psi + v * psi + psi^2) * y1 * y2^2,
+        y2^3 * y4^2 - y2^3 * y4 - y2^2 * y3 * y4 - y2^2 * y4^2 +
+        (-gamma^2 * psi + gamma^2 + gamma * v + gamma * psi) * y2 * y4,
+        -y2^3 * y4^2 + y2^3 * y4 + y2^2 * y3 * y4 + y2^2 * y4^2 + gamma^2 * y2 * y4^2 -
+        gamma^2 * y2 * y4 - gamma^2 * y3 * y4 - gamma^2 * y4^2,
+        (gamma * psi^2 - gamma * psi - v * psi - psi^2) * y1 * y2^3 * y4 +
+        (-beta * gamma * psi + 2 * beta * gamma + beta * v + beta * psi) * y2^3 * y4^2 +
+        (-2 * gamma * psi^2 + 2 * gamma * psi + 2 * v * psi + 2 * psi^2) * y1 * y2^3 +
+        (-gamma * psi^2 + gamma * psi + v * psi + psi^2) * y1 * y2^2 * y3 +
+        (-gamma * psi^2 + gamma * psi + v * psi + psi^2) * y1 * y2^2 * y4 +
+        (beta * gamma * psi - 2 * beta * gamma - beta * v - beta * psi) * y2^3 * y4 +
+        (beta * gamma * psi - 2 * beta * gamma - beta * v - beta * psi) * y2^2 * y3 * y4 +
+        (beta * gamma * psi - 2 * beta * gamma - beta * v - beta * psi) * y2^2 * y4^2,
+        (
+            2 * gamma^2 * psi^2 - 2 * gamma^2 * psi - 2 * gamma * v * psi -
+            2 * gamma * psi^2
+        ) *
+        y1 *
+        y2^3 *
+        y4 +
+        (
+            3 * gamma^2 * psi^2 - 3 * gamma^2 * psi - 3 * gamma * v * psi -
+            3 * gamma * psi^2
+        ) *
+        y1 *
+        y2^2 *
+        y3 *
+        y4 +
+        (
+            -2 * beta * gamma^2 * psi + 2 * beta * gamma^2 - 3 * beta * gamma * v * psi +
+            5 * beta * gamma * v +
+            2 * beta * gamma * psi +
+            3 * beta * v * psi
+        ) *
+        y2^3 *
+        y4^2 +
+        (
+            -2 * gamma^2 * psi^2 +
+            2 * gamma^2 * psi +
+            2 * gamma * v * psi +
+            2 * gamma * psi^2
+        ) *
+        y1 *
+        y2^3 +
+        (
+            -5 * gamma^2 * psi^2 +
+            5 * gamma^2 * psi +
+            5 * gamma * v * psi +
+            5 * gamma * psi^2
+        ) *
+        y1 *
+        y2^2 *
+        y3 +
+        (
+            -2 * gamma^2 * psi^2 +
+            2 * gamma^2 * psi +
+            2 * gamma * v * psi +
+            2 * gamma * psi^2
+        ) *
+        y1 *
+        y2^2 *
+        y4 +
+        (
+            2 * beta * gamma^2 * psi - 2 * beta * gamma^2 + 3 * beta * gamma * v * psi -
+            5 * beta * gamma * v - 2 * beta * gamma * psi - 3 * beta * v * psi
+        ) *
+        y2^3 *
+        y4 +
+        (
+            -3 * gamma^2 * psi^2 +
+            3 * gamma^2 * psi +
+            3 * gamma * v * psi +
+            3 * gamma * psi^2
+        ) *
+        y1 *
+        y2 *
+        y3 *
+        y4 +
+        (
+            2 * beta * gamma^2 * psi - 2 * beta * gamma^2 + 3 * beta * gamma * v * psi -
+            5 * beta * gamma * v - 2 * beta * gamma * psi - 3 * beta * v * psi
+        ) *
+        y2^2 *
+        y3 *
+        y4 +
+        (
+            2 * beta * gamma^2 * psi - 2 * beta * gamma^2 + 3 * beta * gamma * v * psi -
+            5 * beta * gamma * v - 2 * beta * gamma * psi - 3 * beta * v * psi
+        ) *
+        y2^2 *
+        y4^2,
+        (-gamma * psi + 2 * gamma + v + psi) * y2^3 * y4^2 +
+        (gamma * psi - 2 * gamma - v - psi) * y2^3 * y4 +
+        (gamma * psi - 2 * gamma - v - psi) * y2^2 * y3 * y4 +
+        (gamma^2 * psi - gamma^2 - gamma * v - 2 * gamma - v - psi) * y2^2 * y4^2 +
+        (-2 * gamma^2 * psi + 2 * gamma^2 + 2 * gamma * v + 2 * gamma * psi) * y2^2 * y4 +
+        (-gamma^2 * psi + gamma^2 + gamma * v + gamma * psi) * y2 * y3 * y4 +
+        (-gamma^2 * psi + gamma^2 + gamma * v + gamma * psi) * y2 * y4^2,
+        (gamma * psi^2 - gamma * psi - v * psi - psi^2) * y1 * y2^4 * y3 * y4 +
+        (-gamma * psi^2 + gamma * psi + v * psi + psi^2) * y1 * y2^4 * y3 +
+        (-gamma * psi^2 + gamma * psi + v * psi + psi^2) * y1 * y2^3 * y3 * y4 +
+        (-beta * gamma^2 * v * psi + beta * gamma^2 * v + beta * gamma * v * psi) *
+        y2^3 *
+        y4^2 +
+        (beta * gamma^2 * v * psi - beta * gamma^2 * v - beta * gamma * v * psi) *
+        y2^3 *
+        y4 +
+        (beta * gamma^2 * v * psi - beta * gamma^2 * v - beta * gamma * v * psi) *
+        y2^2 *
+        y3 *
+        y4 +
+        (beta * gamma^2 * v * psi - beta * gamma^2 * v - beta * gamma * v * psi) *
+        y2^2 *
+        y4^2,
+        (gamma * psi - 2 * gamma - v - psi) * y2^3 * y4^2 +
+        (-gamma * psi + 2 * gamma + v + psi) * y2^3 * y4 +
+        (-gamma * psi + 2 * gamma + v + psi) * y2^2 * y3 * y4 +
+        (-gamma^2 * psi + gamma^2 + gamma * v + 2 * gamma + v + psi) * y2^2 * y4^2 +
+        (2 * gamma^2 * psi - 2 * gamma^2 - 2 * gamma * v - 2 * gamma * psi) * y2^2 * y4 +
+        (gamma^2 * psi - gamma^2 - gamma * v - gamma * psi) * y2 * y3 * y4 +
+        (gamma^2 * psi - gamma^2 - gamma * v - gamma * psi) * y2 * y4^2,
+        (gamma * psi - 2 * gamma - v - psi) * y2^3 * y4^2 +
+        (-gamma * psi + 2 * gamma + v + psi) * y2^3 * y4 +
+        (-gamma * psi + 2 * gamma + v + psi) * y2^2 * y3 * y4 +
+        (-gamma * psi + 2 * gamma + v + psi) * y2^2 * y4^2 +
+        (-gamma^3 * psi + gamma^3 + gamma^2 * v + gamma^2 * psi) * y2 * y4^2 +
+        (2 * gamma^3 * psi - 2 * gamma^3 - 2 * gamma^2 * v - 2 * gamma^2 * psi) * y2 * y4 +
+        (gamma^3 * psi - gamma^3 - gamma^2 * v - gamma^2 * psi) * y3 * y4 +
+        (gamma^3 * psi - gamma^3 - gamma^2 * v - gamma^2 * psi) * y4^2,
+        (
+            -beta * gamma^2 * psi + beta * gamma^2 - beta * gamma * v * psi +
+            2 * beta * gamma * v +
+            beta * gamma * psi +
+            beta * v * psi
+        ) *
+        y2^3 *
+        y4^2 +
+        (gamma^3 * psi^2 - gamma^3 * psi - gamma^2 * v * psi - gamma^2 * psi^2) *
+        y1 *
+        y2^2 *
+        y4 +
+        (
+            beta * gamma^2 * psi - beta * gamma^2 + beta * gamma * v * psi -
+            2 * beta * gamma * v - beta * gamma * psi - beta * v * psi
+        ) *
+        y2^3 *
+        y4 +
+        (gamma^3 * psi^2 - gamma^3 * psi - gamma^2 * v * psi - gamma^2 * psi^2) *
+        y1 *
+        y2 *
+        y3 *
+        y4 +
+        (
+            beta * gamma^2 * psi - beta * gamma^2 + beta * gamma * v * psi -
+            2 * beta * gamma * v - beta * gamma * psi - beta * v * psi
+        ) *
+        y2^2 *
+        y3 *
+        y4 +
+        (
+            beta * gamma^2 * psi - beta * gamma^2 + beta * gamma * v * psi -
+            2 * beta * gamma * v - beta * gamma * psi - beta * v * psi
+        ) *
+        y2^2 *
+        y4^2 +
+        (-gamma^3 * psi^2 + gamma^3 * psi + gamma^2 * v * psi + gamma^2 * psi^2) *
+        y1 *
+        y2^2 +
+        (
+            -2 * gamma^3 * psi^2 +
+            2 * gamma^3 * psi +
+            2 * gamma^2 * v * psi +
+            2 * gamma^2 * psi^2
+        ) *
+        y1 *
+        y2 *
+        y3 +
+        (-gamma^3 * psi^2 + gamma^3 * psi + gamma^2 * v * psi + gamma^2 * psi^2) *
+        y1 *
+        y2 *
+        y4 +
+        (-gamma^3 * psi^2 + gamma^3 * psi + gamma^2 * v * psi + gamma^2 * psi^2) *
+        y1 *
+        y3 *
+        y4,
+        beta * y2^3 * y4^2 - beta * y2^3 * y4 - beta * y2^2 * y3 * y4 - beta * y2^2 * y4^2 +
+        (-gamma^3 * psi^2 + gamma^3 * psi + gamma^2 * v * psi + gamma^2 * psi^2) * y1,
+        (gamma * psi^2 - gamma * psi - v * psi - psi^2) * y1 * y2^4 * y4 +
+        (3 * gamma * psi^2 - 3 * gamma * psi - 3 * v * psi - 3 * psi^2) *
+        y1 *
+        y2^3 *
+        y3 *
+        y4 +
+        (-gamma * psi^2 + gamma * psi + v * psi + psi^2) * y1 * y2^4 +
+        (-4 * gamma * psi^2 + 4 * gamma * psi + 4 * v * psi + 4 * psi^2) * y1 * y2^3 * y3 +
+        (-gamma * psi^2 + gamma * psi + v * psi + psi^2) * y1 * y2^3 * y4 +
+        (-3 * gamma * psi^2 + 3 * gamma * psi + 3 * v * psi + 3 * psi^2) *
+        y1 *
+        y2^2 *
+        y3 *
+        y4 +
+        (
+            -beta * gamma^2 * psi + beta * gamma^2 - 3 * beta * gamma * v * psi +
+            4 * beta * gamma * v +
+            beta * gamma * psi +
+            3 * beta * v * psi
+        ) *
+        y2^3 *
+        y4^2 +
+        (
+            beta * gamma^2 * psi - beta * gamma^2 + 3 * beta * gamma * v * psi -
+            4 * beta * gamma * v - beta * gamma * psi - 3 * beta * v * psi
+        ) *
+        y2^3 *
+        y4 +
+        (
+            beta * gamma^2 * psi - beta * gamma^2 + 3 * beta * gamma * v * psi -
+            4 * beta * gamma * v - beta * gamma * psi - 3 * beta * v * psi
+        ) *
+        y2^2 *
+        y3 *
+        y4 +
+        (
+            beta * gamma^2 * psi - beta * gamma^2 + 3 * beta * gamma * v * psi -
+            4 * beta * gamma * v - beta * gamma * psi - 3 * beta * v * psi
+        ) *
+        y2^2 *
+        y4^2,
+        2 * beta * y2^3 * y4^2 - 2 * beta * y2^3 * y4 - 2 * beta * y2^2 * y3 * y4 -
+        2 * beta * y2^2 * y4^2 +
+        (
+            -2 * gamma^2 * psi^2 +
+            2 * gamma^2 * psi +
+            2 * gamma * v * psi +
+            2 * gamma * psi^2
+        ) *
+        y1 *
+        y2,
+        y2^4 * y4^2 - y2^4 * y4 - y2^3 * y3 * y4 +
+        (-gamma - 1) * y2^3 * y4^2 +
+        gamma * y2^3 * y4 +
+        gamma * y2^2 * y3 * y4 +
+        gamma * y2^2 * y4^2,
+        -t * y2^3 * y4^2 + t * y2^3 * y4 + t * y2^2 * y3 * y4 + t * y2^2 * y4^2 + 1
+    ]
+
     gb, graph = learn_and_apply(SEIR_1_io)
 end
 

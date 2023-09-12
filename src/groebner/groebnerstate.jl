@@ -1,38 +1,43 @@
 
-mutable struct GroebnerState{BB}
+mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
     # original polynomials over Q(a)
-    blackbox::BB
-    shape::Vector{Vector{gfp_mpoly}}
-    basis_at_random_point::Dict{Any, Any}
+    blackbox::Blackbox
+    shape::Vector{Vector{PolyFF}}
     # total degrees of the parameters of the Groebner basis
     param_degrees::Vector{Vector{Tuple{Int, Int}}}
     # exponents of the parameters of the Groebner basis
-    param_exponents::Vector{Vector{Tuple{gfp_mpoly, gfp_mpoly}}}
-    param_coeffs_crt::Any
-    field_to_param_exponents::Dict{Any, Any}
+    param_exponents::Vector{Vector{Tuple{PolyFF, PolyFF}}}
+    param_coeffs_crt::Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}
+    field_to_param_exponents::Dict{FF, Vector{Vector{Tuple{PolyFF, PolyFF}}}}
     # fully reconstructed basis
-    param_basis::Any
-    field_to_polys::Dict{Any, Any}
-    context::Any
-    ordering::Any
+    param_basis::Vector{PolyFracQQ}
+    # GB computation helpers
+    gb_context::Any
+    gb_ordering::OrderingGb
 
-    function GroebnerState(blackbox::T, ord) where {T <: AbstractBlackboxIdeal}
+    function GroebnerState(
+        blackbox::Blackbox,
+        ord::Ord
+    ) where {Blackbox <: AbstractBlackboxIdeal, Ord}
         Rx = parent(blackbox)
         Ra = parent_params(blackbox)
         params = gens(Ra)
         polyvars = gens(Rx)
         K = base_ring(Ra)
-        @info "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
-        new{T}(
+        @debug "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
+        PolyFF = Nemo.gfp_mpoly
+        PolyFracQQ = AbstractAlgebra.Generic.MPoly{
+            AbstractAlgebra.Generic.Frac{Nemo.QQMPolyRingElem}
+        }
+        FF = Nemo.fpField
+        new{Blackbox, FF, PolyFF, PolyFracQQ, typeof(ord)}(
             blackbox,
-            Vector{Vector{gfp_mpoly}}(),
-            Dict(),
+            Vector{Vector{Nemo.gfp_mpoly}}(),
             Vector{Vector{Tuple{Int, Int}}}(),
-            Vector{Vector{Tuple{gfp_mpoly, gfp_mpoly}}}(),
-            nothing,
-            Dict(),
-            nothing,
-            Dict(),
+            Vector{Vector{Tuple{PolyFF, PolyFF}}}(),
+            Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(),
+            Dict{FF, Vector{Vector{Tuple{PolyFF, PolyFF}}}}(),
+            Vector{PolyFracQQ}(),
             nothing,
             ord
         )

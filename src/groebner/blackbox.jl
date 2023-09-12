@@ -24,17 +24,18 @@ abstract type AbstractBlackboxIdeal end
 
 mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
     polys::Vector{PolyQQX}
-    polys_mod_p
-    
+    polys_mod_p::Any
+
     function BasicBlackboxIdeal(polys::Vector{T}) where {T}
         @assert !isempty(polys)
         polys = filter(!iszero, polys)
-        @info "Constructing a blackbox from $(length(polys)) input polynomials"
+        @debug "Constructing a blackbox from $(length(polys)) input polynomials"
         Rx = parent(polys[1])
         Ra = base_ring(Rx)
         if Ra isa Nemo.FracField
             Ra = base_ring(Ra)
-            Rlifted, _ = PolynomialRing(Ra, map(string, gens(Rx)), ordering=Nemo.ordering(Rx))
+            Rlifted, _ =
+                PolynomialRing(Ra, map(string, gens(Rx)), ordering=Nemo.ordering(Rx))
             polys = liftcoeffs(polys, Rlifted)
         end
         K = base_ring(Ra)
@@ -43,21 +44,16 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
     end
 end
 
-AbstractAlgebra.base_ring(ideal::BasicBlackboxIdeal) = base_ring(base_ring(first(ideal.polys)))
+AbstractAlgebra.base_ring(ideal::BasicBlackboxIdeal) =
+    base_ring(base_ring(first(ideal.polys)))
 AbstractAlgebra.parent(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys))
 parent_params(ideal::BasicBlackboxIdeal) = base_ring(parent(first(ideal.polys)))
 Base.length(ideal::BasicBlackboxIdeal) = length(ideal.polys)
 
 function reduce_mod_p!(ideal::BasicBlackboxIdeal, ff)
-    @logmsg LogLevel(0) "Reducing modulo $(ff).."
+    @debug "Reducing modulo $(ff).."
     ideal.polys_mod_p = map(
-        poly -> map_coefficients(
-            f -> map_coefficients(
-                c -> ff(c), 
-                f
-            ), 
-            poly
-        ), 
+        poly -> map_coefficients(f -> map_coefficients(c -> ff(c), f), poly),
         ideal.polys
     )
     nothing
@@ -70,7 +66,7 @@ function specialize_mod_p(ideal::BasicBlackboxIdeal, point)
             __throw_unlucky_cancellation()
         end
     end
-    map(f -> map_coefficients(c -> evaluate(c, point), f), polys_mod_p)    
+    map(f -> map_coefficients(c -> evaluate(c, point), f), polys_mod_p)
 end
 
 function liftcoeffs(polys, newring)

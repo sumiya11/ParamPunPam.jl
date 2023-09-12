@@ -9,7 +9,8 @@ mutable struct PrecomputedField{Field}
     extensiondeg::Int
 
     function PrecomputedField(K::Field) where {Field}
-        Nemo.order(K) > typemax(Int) && @warn "The field is too large for discrete logarithms."
+        Nemo.order(K) > typemax(Int) &&
+            @warn "The field is too large for discrete logarithms."
         ordmult = Int(Nemo.order(K) - 1)
         factors = collect(Primes.factor(Dict, ordmult))
         new{Field}(K, ordmult, factors, Nemo.degree(K))
@@ -28,9 +29,9 @@ mutable struct DiscreteLogBuffers{Field, I}
         largest = maximum(f -> first(f), PF.factors)
         baby = sizehint!(Dict{elem_type(PF.K), Int}(), isqrt(largest))
         new{Field, elem_type(PF.K)}(
-            PF, 
-            Vector{Int}(undef, nfactors), 
-            Vector{Int}(undef, nfactors), 
+            PF,
+            Vector{Int}(undef, nfactors),
+            Vector{Int}(undef, nfactors),
             baby
         )
     end
@@ -44,7 +45,7 @@ _threshold_direct_case() = 2^5
 
 # Solves a^x = y (mod p) for x
 # ord is the order of a in Z/Zp, factors is an array of factors of p-1
-discrete_log(a::I, y::I, buf; ord_isprime=false) where {I} = 
+discrete_log(a::I, y::I, buf; ord_isprime=false) where {I} =
     discrete_log(a, y, buf.PF.ordmult, buf; ord_isprime=ord_isprime)
 
 function discrete_log(a::I, y::I, ord::T, buf; ord_isprime=false) where {I, T}
@@ -73,13 +74,13 @@ function pohlig_hellman_discrete_log(a::I, y::I, ord::T, buf) where {I, T}
         ai, yi = a, y
         xi = zero(T)
         cc = one(ai)
-        for j in 0:di-1
+        for j in 0:(di - 1)
             pij = pi^j
-            cij = div(ord, pij*pi)
-            aij = ai^(cij*pij)
-            yij = (yi*inv(cc))^cij
+            cij = div(ord, pij * pi)
+            aij = ai^(cij * pij)
+            yij = (yi * inv(cc))^cij
             xij = discrete_log(aij, yij, pi, buf, ord_isprime=true)
-            tij = xij*pij
+            tij = xij * pij
             cc *= ai^tij
             xi += tij
         end
@@ -99,7 +100,7 @@ function babystep_giantstep_discrete_log(a::I, y::I, ord::T, buf) where {I, T}
     # this does nothing if the size of baby is enough
     sizehint!(baby, m)
     ai = one(a)
-    for i in 0:m-1
+    for i in 0:(m - 1)
         baby[ai] = i
         ai *= a
     end
@@ -113,7 +114,7 @@ function babystep_giantstep_discrete_log(a::I, y::I, ord::T, buf) where {I, T}
     end
     laststep = baby[giantstep]
     empty!(baby)
-    i*m + laststep
+    i * m + laststep
 end
 
 # Solves a^x = y (mod p).

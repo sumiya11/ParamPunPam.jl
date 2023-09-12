@@ -20,7 +20,7 @@ function interpolate!(c::CauchyInterpolator, xs::Vector{T}, ys::Vector{T}) where
     # F is the polynomial of degree at max N + D + 1
     # that passes through interpolation points,
     # O(M(n)logn)
-    F = fastpolyinterpolate(R, xs, ys)
+    F = Nemo.interpolate(R, xs, ys)
     # modulo = (z - x1)(z - x2)...(z - xn) for xi in xs,
     # O(M(n))
     modulo = producttree(z, xs)
