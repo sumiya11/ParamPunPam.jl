@@ -74,13 +74,17 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     # If no hint for degrees is given, then try to guess degrees
     if !haskey(kwargs, :up_to_degree)
         if !estimate_degrees
-            @warn "Changing the value of the parameter `estimate_degrees` from `false` to `true` since the keyword argument `up_to_degree` is not provided"
+            @warn """
+            Changing the value of keyword argument `estimate_degrees` from
+            `false` to `true` since the value of `up_to_degree` is not
+            specified.
+            """
             estimate_degrees = true
         end
     end
     _runtime_data[:npoints_degree_estimation] = 0
     _runtime_data[:npoints_interpolation] = 0
-    @info """
+    @debug """
     Computing parametric Groebner basis up to degrees $up_to_degree
     Ordering, input / target: $ord / $(typeof(ordering))
     Rational interpolator: $rational_interpolator
@@ -348,10 +352,12 @@ function interpolate_param_exponents!(
     Nds, Dds = repeat([Nd], n), repeat([Dd], n)
 
     if !is_interpolation_feasible(max(Nd, Dd), K, n)
-        @warn "In Prime number approach the field order might be too small" Nd Dd max(
+        @warn "In the prime number interpolation approach the field order might be too small" Nd Dd n max(
             Nd,
             Dd
-        ) * log(n) log(BigInt(order(K)))
+        ) * log(
+            n
+        ) log(BigInt(order(K)))
     end
 
     # The current number of terms
@@ -516,7 +522,7 @@ function interpolate_param_exponents!(
     maxDd = maximum(l -> maximum(total_degree ∘ last, l), param_exponents)
     maxTn = maximum(l -> maximum(length ∘ first, l), param_exponents)
     maxTd = maximum(l -> maximum(length ∘ last, l), param_exponents)
-    @info """
+    @debug """
     Basis interpolated exponents summary:
     Maximal interpolated degrees are: $maxDn for num. and $maxDd for den.
     Maximal number of interpolated terms are: $maxTn for num. and $maxTd for den.
@@ -530,7 +536,7 @@ function recover_coefficients!(state, modular, assess_correctness)
     reconstruct_crt!(state, modular)
     success = reconstruct_rational!(state, modular)
     if !success
-        @info "Rational reconstrction failed, selecting next prime.."
+        @info "Rational reconstruction failed, selecting next prime.."
         return success
     end
     if !assess_correctness
@@ -568,7 +574,10 @@ function majorityrule(bases::Vector{T}) where {T}
     end
     shapes = map(basisshape, bases)
     if length(unique!(shapes)) > 1
-        @warn "One of the computed bases has a different shape"
+        @warn """
+        The shape of one of the specialized Groebner bases is different from the
+        others.
+        """
         return false, first(bases)
     end
     true, first(bases)
