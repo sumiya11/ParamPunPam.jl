@@ -19,12 +19,6 @@ Subtypes of `AbstractBlackboxIdeal` must implement the following functions:
 """
 abstract type AbstractBlackboxIdeal end
 
-@noinline __throw_unlucky_cancellation() =
-    throw(AssertionError("Unlucky cancellation of coefficients!"))
-
-@noinline __throw_something_went_wrong(msg) =
-    throw(AssertionError("Something went wrong when computing Groebner bases.\n$msg"))
-
 mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
     polys::Vector{PolyQQX}
     polys_mod_p::Any
@@ -53,10 +47,10 @@ AbstractAlgebra.parent(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys))
 parent_params(ideal::BasicBlackboxIdeal) = base_ring(parent(first(ideal.polys)))
 Base.length(ideal::BasicBlackboxIdeal) = length(ideal.polys)
 
-function reduce_mod_p!(ideal::BasicBlackboxIdeal, ff)
-    @debug "Reducing modulo $(ff).."
+function reduce_mod_p!(ideal::BasicBlackboxIdeal, finite_field)
+    @debug "Reducing modulo $(finite_field).."
     ideal.polys_mod_p = map(
-        poly -> map_coefficients(f -> map_coefficients(c -> ff(c), f), poly),
+        poly -> map_coefficients(f -> map_coefficients(c -> finite_field(c), f), poly),
         ideal.polys
     )
     nothing

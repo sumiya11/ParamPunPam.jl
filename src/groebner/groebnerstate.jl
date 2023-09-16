@@ -52,7 +52,7 @@ end
 
 function reconstruct_crt!(state, modular)
     field_to_param_exponents = state.field_to_param_exponents
-    char = UInt64(characteristic(modular.ff))
+    char = UInt64(characteristic(modular.finite_field))
     if length(field_to_param_exponents) == 1
         shape = state.shape
         param_coeffs_crt =
@@ -111,8 +111,8 @@ Returns (success, poly_qq), where `success` is `true` if the reconstruction was
 successful and `false`, otherwise.
 """
 function rational_reconstruct_polynomial(ring, poly_ff)
-    ff = base_ring(parent(poly_ff))
-    modulo = BigInt(characteristic(ff))
+    finite_field = base_ring(parent(poly_ff))
+    modulo = BigInt(characteristic(finite_field))
     bnd = Groebner.rational_reconstruction_bound(modulo)
     buf, buf1 = BigInt(), BigInt()
     buf2, buf3 = BigInt(), BigInt()
@@ -246,17 +246,19 @@ function assess_correctness_mod_p(state, modular)
     # NOTE: in this state, ideally, this should always pass, since the modulo
     # we use to check correctness is the same as the one used to compute the
     # basis
-    ff = modular.ff
-    reduce_mod_p!(state.blackbox, ff)
-    point = randluckyspecpoint(state, ff)
-    @debug "Checking correctness at $point in $ff"
+    finite_field = modular.finite_field
+    reduce_mod_p!(state.blackbox, finite_field)
+    point = randluckyspecpoint(state, finite_field)
+    @debug "Checking correctness at $point in $finite_field"
     generators_zp = specialize_mod_p(state.blackbox, point)
     R_zp = parent(first(generators_zp))
     basis_specialized_coeffs = map(
         f -> map(
             c ->
-                evaluate(map_coefficients(cc -> ff(cc), numerator(c)), point) //
-                evaluate(map_coefficients(cc -> ff(cc), denominator(c)), point),
+                evaluate(map_coefficients(cc -> finite_field(cc), numerator(c)), point) // evaluate(
+                    map_coefficients(cc -> finite_field(cc), denominator(c)),
+                    point
+                ),
             collect(coefficients(f))
         ),
         state.param_basis

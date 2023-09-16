@@ -11,13 +11,13 @@ The algorithm is probabilistic and succeeds with a high probability.
 
 Supported keyword arguments:
 
-- `ordering`: monomial ordering. Same as for Groebner.jl, for example, `Lex()`
+- `ordering`: monomial ordering. Same as for **Groebner.jl**, for example, `Lex()`
   or `DegRevLex()`.
 - `up_to_degree`: Compute parameters up to a fixed total degree of numerators
-  and denominators e.g., `up_to_degree=(2, 2)`. 
-  NOTE: If `up_to_degree` is specified, then a coefficient in the returned basis
-  is guaranteed to be correct only if it has total degree is smaller than
-  `up_to_degree`. Otherwise, a coefficient in the basis is set to `1`.
+  and denominators e.g., `up_to_degree=(2, 2)`. **NOTE:** If `up_to_degree` is
+  specified, then a coefficient in the basis is guaranteed to be correct only if
+  its total degree is smaller than or equal to `up_to_degree`. Otherwise, a
+  coefficient in the basis is set to `1`.
 - `rational_interpolator`: Rational function interpolation algorithm.
   Possible options are `:CuytLee` and `:VanDerHoevenLecerf` (default).
 - `estimate_degrees`: If `true`, estimates the total degrees of parameters
@@ -59,7 +59,10 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     for (k, _) in kwargs
         @assert k in _supported_kwargs """
         Keyword argument `$k` is not supported. 
-        Supported keyword arguments are: $(join(map(string, collect(_supported_kwargs)), ", "))"""
+        Supported keyword arguments are: $(join(map(string, collect(_supported_kwargs)), ", ")).
+
+        Type `?` followed by `paramgb` to get a description of all supported
+        keyword arguments."""
     end
     up_to_degree = get(kwargs, :up_to_degree, (Inf, Inf))
     @assert all(up_to_degree .> 0) "Total degrees must be greater than 0"
@@ -120,15 +123,15 @@ function _paramgb(
     discover_shape!(state, modular)
     # Discover the total degrees of parameters in the coefficients. 
     if estimate_degrees
-        discover_param_total_degrees!(state, modular, up_to_degree)
+        discover_total_degrees!(state, modular, up_to_degree)
     end
     # Interpolate the exponents in the parametric coefficients.
     # This uses exactly 1 prime number
     InterpolatorType = select_interpolator(rational_interpolator, polynomial_interpolator)
     @label InterpolateUsingOnePrime
-    interpolate_param_exponents!(state, modular, up_to_degree, InterpolatorType)
-    # Interpolate the rational coefficients of the parametric coefficients.
-    # This uses the currently accumulated bases modulo different primes to
+    interpolate_exponents!(state, modular, up_to_degree, InterpolatorType)
+    # Interpolate the rational coefficients of the parametric coefficients. This
+    # uses the currently accumulated bases modulo several different primes to
     # recover the coefficients by the means of CRT and Rational number
     # reconstruction 
     success = recover_coefficients!(state, modular, assess_correctness)
@@ -142,35 +145,38 @@ function _paramgb(
 end
 
 function select_interpolator(rational_interpolator, polynomial_interpolator)
+    # Currently, we always use PrimesBenOrTiwari for interpolating multivariate
+    # polynomials
     if rational_interpolator === :VanDerHoevenLecerf
         VanDerHoevenLecerf
     else
+        @assert rational_interpolator === :CuytLee
         CuytLee
     end
 end
 
-# Discovers shape of the groebner basis of the ideal from `state`
-# by specializing it at a random point (preferably, modulo a prime).
+# Discovers the shape of the groebner basis of the ideal from `state` by
+# specializing it at a random point (preferably, modulo a prime).
 #
-# If η > 0 is given, the algorithm will confirm the shape
-# by additionaly specializing it at η random points.
+# If η > 0 is given, the algorithm will confirm the shape by additionaly
+# specializing the basis at η random points.
 function discover_shape!(state, modular; η=2)
-    iszero(η) && (@warn "Fixing the shape of the basis from 1 point is adventurous.")
+    iszero(η) && (@warn "Discovering the shape of the basis from 1 point is adventurous.")
     @debug "Specializing at $(1 + η) points to guess the shape of the basis.."
     blackbox = state.blackbox
     ord = state.gb_ordering
     # Guess the shape for 1 lucky prime:
-    reduce_mod_p!(blackbox, modular.ff)
+    reduce_mod_p!(blackbox, modular.finite_field)
     prog = ProgressUnknown(
         "# Computing specializations.. ",
         spinner=true,
         dt=0.3,
-        enabled=progressbar_enabled(),
+        enabled=is_progressbar_enabled(),
         color=_progressbar_color
     )
     @label Start
     # specialize at a random lucky point and compute GBs
-    randompoints = map(_ -> randluckyspecpoint(state, modular.ff), 1:(1 + η))
+    randompoints = map(_ -> randluckyspecpoint(state, modular.finite_field), 1:(1 + η))
     polysspecmodp = map(point -> specialize_mod_p(blackbox, point), randompoints)
     gb_context, gb =
         groebner_learn(polysspecmodp[1], ordering=ord, loglevel=groebner_loglevel())
@@ -200,16 +206,16 @@ function discover_shape!(state, modular; η=2)
     nothing
 end
 
-is_tdeg_interpolated_heuristic(dD, DD, dN, DN) =
-    (dD + 3) < div(3DD, 4) && (dN + 3) < div(3DN, 4)
-
 const DEGREE_TOO_LARGE = -1
 
-function discover_param_total_degrees!(state, modular, up_to_degree)
+# Estimates the total degree of parameters of each of the coefficients of the
+# Groebner basis. If the total degree of some coefficient is larger than the
+# given `up_to_degree`, then the coefficient is marked with DEGREE_TOO_LARGE.
+function discover_total_degrees!(state, modular, up_to_degree)
     @debug "Specializing at random points to guess the total degrees in parameters.."
     blackbox = state.blackbox
     ord = state.gb_ordering
-    Ru, _ = PolynomialRing(modular.ff, :u)
+    Ru, _ = PolynomialRing(modular.finite_field, :u)
     K = base_ring(Ru)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
@@ -246,7 +252,7 @@ function discover_param_total_degrees!(state, modular, up_to_degree)
         "# Computing specializations.. ",
         spinner=true,
         dt=0.3,
-        enabled=progressbar_enabled(),
+        enabled=is_progressbar_enabled(),
         color=_progressbar_color
     )
     while !all_interpolated
@@ -262,7 +268,6 @@ function discover_param_total_degrees!(state, modular, up_to_degree)
         interpolator = CauchyInterpolator(Ru, N, D)
         npoints = N + D + 2
         @debug "Using $npoints points.."
-        # TODO: points such that denominators and leading coeffs do not vanish
         univ_points = distinct_nonzero_points(K, npoints - length(univ_points), univ_points)
         x_points = map(point -> dilation .* repeat([point], n) .+ shift, univ_points)
         for i in 1:length(shape)
@@ -324,7 +329,10 @@ function discover_param_total_degrees!(state, modular, up_to_degree)
     nothing
 end
 
-function interpolate_param_exponents!(
+# Interpolates the exponents of the parametric coefficients of the Groebner
+# basis. Assumes that the order of the selected finite field is large enough for
+# this.
+function interpolate_exponents!(
     state,
     modular,
     up_to_degree,
@@ -333,10 +341,10 @@ function interpolate_param_exponents!(
     @debug "Interpolating the exponents in parameters.."
     blackbox = state.blackbox
     ord = state.gb_ordering
-    reduce_mod_p!(blackbox, modular.ff)
+    reduce_mod_p!(blackbox, modular.finite_field)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
-    Ru, _ = PolynomialRing(modular.ff, symbols(Ra), ordering=Nemo.ordering(Ra))
+    Ru, _ = PolynomialRing(modular.finite_field, symbols(Ra), ordering=Nemo.ordering(Ra))
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape
@@ -367,7 +375,7 @@ function interpolate_param_exponents!(
         Vector{Vector{Tuple{elem_type(Ru), elem_type(Ru)}}}(undef, length(shape))
     coeffs = Vector{Vector{Vector{elem_type(K)}}}(undef, length(shape))
     must_be_interpolated = Vector{Vector{Bool}}(undef, length(shape))
-    for i in 1:length(shape)
+    @inbounds for i in 1:length(shape)
         param_exponents[i] =
             Vector{Tuple{elem_type(Ru), elem_type(Ru)}}(undef, length(shape[i]))
         coeffs[i] = Vector{Vector{elem_type(K)}}(undef, length(shape[i]))
@@ -397,7 +405,7 @@ function interpolate_param_exponents!(
         "# Computing specializations..",
         spinner=true,
         dt=0.3,
-        enabled=progressbar_enabled(),
+        enabled=is_progressbar_enabled(),
         color=_progressbar_color
     )
     attempts = 3
@@ -482,7 +490,6 @@ function interpolate_param_exponents!(
         Ip = specialize_mod_p(blackbox, random_point)
         flag, gb_at_random_point =
             groebner_apply!(gb_context, Ip, loglevel=groebner_loglevel())
-        # TODO: no need to throw here
         !flag && __throw_unlucky_cancellation()
         @debug """
         Checking interpolated coefficients at a random points. 
@@ -515,7 +522,7 @@ function interpolate_param_exponents!(
     end
     finish!(prog)
     state.param_exponents = param_exponents
-    state.field_to_param_exponents[modular.ff] = state.param_exponents
+    state.field_to_param_exponents[modular.finite_field] = state.param_exponents
     _runtime_data[:npoints_interpolation] = npoints
     @debug "Success! $(npoints) points used."
     maxDn = maximum(l -> maximum(total_degree ∘ first, l), param_exponents)

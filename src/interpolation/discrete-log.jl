@@ -40,7 +40,6 @@ end
 # Dispatch between direct and baby-giant discrete log algorithms 
 # is based on the size of the base order.
 # If the order is < _threshold_direct_case(), direct algorithm is used.
-# Based on profile results in perf/discrete-logs.ipynb
 _threshold_direct_case() = 2^5
 
 # Solves a^x = y (mod p) for x
@@ -93,11 +92,10 @@ end
 # Solves a^x = y (mod p) for x using the baby-step giant-step algorithm.
 # ord is the order of a in Z/Zp.
 function babystep_giantstep_discrete_log(a::I, y::I, ord::T, buf) where {I, T}
-    # the size of the giant step
+    # the size of a giant step
     m = Int(isqrt(ord) + 1)
-    # baby steps
     baby = buf.baby
-    # this does nothing if the size of baby is enough
+    # this does nothing if baby has enough capacity
     sizehint!(baby, m)
     ai = one(a)
     for i in 0:(m - 1)

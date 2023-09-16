@@ -1,4 +1,4 @@
-@testset "Rational reconstrction" begin
+@testset "Rational reconstruction" begin
     Rff, (a, b, c) = GF(2^31 - 1)["x", "y", "z"]
     Rqq, (aqq, bqq, cqq) = QQ["x", "y", "z"]
     cases = [
