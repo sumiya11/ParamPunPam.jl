@@ -11,7 +11,6 @@ import Primes
 # For the fun!
 using ProgressMeter
 
-include("long-forgotten-truth.jl")
 include("utils.jl")
 
 include("interpolation/generic.jl")
