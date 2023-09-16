@@ -32,7 +32,7 @@ function test_paramgb(cases, answers; kwargs...)
     end
 end
 
-@testset "GB over Q(a...)" failfast = true begin
+@testset "GB over Q(a...)" begin
     for interpolator in interpolators_to_test
         for param_ord in [:lex, :deglex, :degrevlex]
             for up_to_degree in [(Inf, Inf), (1, 1), (2, 2), (4, 4), (8, 8), (16, 16)]
@@ -153,7 +153,7 @@ end
     end
 end
 
-@testset "Orderings" failfast = true begin
+@testset "Orderings" begin
     for interpolator in interpolators_to_test
         Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
         R, (x1, x2, x3) = PolynomialRing(

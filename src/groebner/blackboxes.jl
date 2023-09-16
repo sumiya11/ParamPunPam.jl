@@ -2,20 +2,20 @@
 """
     AbstractBlackboxIdeal
 
-Blackbox ideals in Q(x)[y] that can be evaluated at x modulo a prime.
+Blackbox ideals in `Q(x)[y]` that can be evaluated at `x` modulo a prime.
 
 ## Interface
 
 Subtypes of `AbstractBlackboxIdeal` must implement the following functions:
 
-- `length(<:AbstractBlackboxIdeal)`: the number of generators.
+- `length(<:AbstractBlackboxIdeal)`: the number of ideal generators.
 - `base_ring(<:AbstractBlackboxIdeal)`: original ground field.
-- `parent(<:AbstractBlackboxIdeal)`: original parent ring.
-- `parent_params(<:AbstractBlackboxIdeal)`: original coefficient parent ring.
-- `reduce_mod_p!(<:AbstractBlackboxIdeal, p)`: reduces the generators modulo
-  `p`.
+- `parent(<:AbstractBlackboxIdeal)`: original polynomial ring.
+- `parent_params(<:AbstractBlackboxIdeal)`: original polynomial ring of coefficients.
+- `reduce_mod_p!(<:AbstractBlackboxIdeal, finite_field)`: reduces generators
+  modulo `p`, where `p` is the characteristic of the given `finite_field`.
 - `specialize_mod_p(<:AbstractBlackboxIdeal, point)`: specializes the ideal at
-  `point` and returns the generators of a specialized ideal in Zp[y].
+  `point` and returns the generators of the specialized ideal in Zp[y].
 """
 abstract type AbstractBlackboxIdeal end
 

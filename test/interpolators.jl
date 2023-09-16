@@ -38,7 +38,7 @@ append!(
 
 evalfrac(f, x) = evaluate(numerator(f), x) // evaluate(denominator(f), x)
 
-@testset "van-der-Hoeven-Lecerf & Cuyt-Lee" failfast = true begin
+@testset "van-der-Hoeven-Lecerf & Cuyt-Lee" begin
     for rational_interpolator in [ParamPunPam.VanDerHoevenLecerf, ParamPunPam.CuytLee]
         @warn "Testing $rational_interpolator"
         for case in cases

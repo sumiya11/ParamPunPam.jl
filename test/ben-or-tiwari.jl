@@ -49,7 +49,7 @@ append!(
     ]
 )
 
-@testset "Ben-or-Tiwari, Primes & Kronecker" failfast = true begin
+@testset "Ben-or-Tiwari, Primes & Kronecker" begin
     for interpolator in [ParamPunPam.PrimesBenOrTiwari, ParamPunPam.KronBenOrTiwari]
         R, (x1, x2, x3) = PolynomialRing(Nemo.GF(2^62 + 135), ["x1", "x2", "x3"])
         poly = 1x1^4 + 2x2 * x3 * x1^20 + 3x3 + 1
