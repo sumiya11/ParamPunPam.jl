@@ -1,14 +1,14 @@
 
-mutable struct GroebnerState{Blackbox,FF,PolyFF,PolyFracQQ,OrderingGb}
+mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
     # original polynomials over Q(a)
     blackbox::Blackbox
     shape::Vector{Vector{PolyFF}}
     # total degrees of the parameters of the Groebner basis
-    param_degrees::Vector{Vector{Tuple{Int,Int}}}
+    param_degrees::Vector{Vector{Tuple{Int, Int}}}
     # exponents of the parameters of the Groebner basis
-    param_exponents::Vector{Vector{Tuple{PolyFF,PolyFF}}}
-    param_coeffs_crt::Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}
-    field_to_param_exponents::Dict{FF,Vector{Vector{Tuple{PolyFF,PolyFF}}}}
+    param_exponents::Vector{Vector{Tuple{PolyFF, PolyFF}}}
+    param_coeffs_crt::Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}
+    field_to_param_exponents::Dict{FF, Vector{Vector{Tuple{PolyFF, PolyFF}}}}
     # fully reconstructed basis
     param_basis::Vector{PolyFracQQ}
     # GB computation helpers
@@ -18,7 +18,7 @@ mutable struct GroebnerState{Blackbox,FF,PolyFF,PolyFracQQ,OrderingGb}
     function GroebnerState(
         blackbox::Blackbox,
         ord::Ord
-    ) where {Blackbox<:AbstractBlackboxIdeal,Ord}
+    ) where {Blackbox <: AbstractBlackboxIdeal, Ord}
         Rx = parent(blackbox)
         Ra = parent_params(blackbox)
         params = gens(Ra)
@@ -26,15 +26,17 @@ mutable struct GroebnerState{Blackbox,FF,PolyFF,PolyFracQQ,OrderingGb}
         K = base_ring(Ra)
         @debug "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
         PolyFF = Nemo.gfp_mpoly
-        PolyFracQQ = Any
-        FF = Any
-        new{Blackbox,FF,PolyFF,PolyFracQQ,typeof(ord)}(
+        PolyFracQQ = AbstractAlgebra.Generic.MPoly{
+            AbstractAlgebra.Generic.Frac{Nemo.QQMPolyRingElem}
+        }
+        FF = Nemo.fpField
+        new{Blackbox, FF, PolyFF, PolyFracQQ, typeof(ord)}(
             blackbox,
             Vector{Vector{Nemo.gfp_mpoly}}(),
-            Vector{Vector{Tuple{Int,Int}}}(),
-            Vector{Vector{Tuple{PolyFF,PolyFF}}}(),
-            Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}(),
-            Dict{FF,Vector{Vector{Tuple{PolyFF,PolyFF}}}}(),
+            Vector{Vector{Tuple{Int, Int}}}(),
+            Vector{Vector{Tuple{PolyFF, PolyFF}}}(),
+            Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(),
+            Dict{FF, Vector{Vector{Tuple{PolyFF, PolyFF}}}}(),
             Vector{PolyFracQQ}(),
             nothing,
             ord
@@ -50,14 +52,14 @@ end
 
 function reconstruct_crt!(state, modular)
     field_to_param_exponents = state.field_to_param_exponents
-    char = UInt64(characteristic(modular.finite_field))
+    char = UInt64(characteristic(modular.ff))
     if length(field_to_param_exponents) == 1
         shape = state.shape
         param_coeffs_crt =
-            Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}(undef, length(shape))
+            Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(undef, length(shape))
         for i in 1:length(param_coeffs_crt)
             param_coeffs_crt[i] =
-                Vector{Tuple{Vector{BigInt},Vector{BigInt}}}(undef, length(shape[i]))
+                Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}(undef, length(shape[i]))
             for j in 1:length(param_coeffs_crt[i])
                 P, Q = state.param_exponents[i][j]
                 Pcoeffs = map(c -> BigInt(data(c)), collect(coefficients(P)))
@@ -109,8 +111,8 @@ Returns (success, poly_qq), where `success` is `true` if the reconstruction was
 successful and `false`, otherwise.
 """
 function rational_reconstruct_polynomial(ring, poly_ff)
-    finite_field = base_ring(parent(poly_ff))
-    modulo = BigInt(characteristic(finite_field))
+    ff = base_ring(parent(poly_ff))
+    modulo = BigInt(characteristic(ff))
     bnd = Groebner.rational_reconstruction_bound(modulo)
     buf, buf1 = BigInt(), BigInt()
     buf2, buf3 = BigInt(), BigInt()
@@ -244,19 +246,17 @@ function assess_correctness_mod_p(state, modular)
     # NOTE: in this state, ideally, this should always pass, since the modulo
     # we use to check correctness is the same as the one used to compute the
     # basis
-    finite_field = modular.finite_field
-    reduce_mod_p!(state.blackbox, finite_field)
-    point = randluckyspecpoint(state, finite_field)
-    @debug "Checking correctness at $point in $finite_field"
+    ff = modular.ff
+    reduce_mod_p!(state.blackbox, ff)
+    point = randluckyspecpoint(state, ff)
+    @debug "Checking correctness at $point in $ff"
     generators_zp = specialize_mod_p(state.blackbox, point)
     R_zp = parent(first(generators_zp))
     basis_specialized_coeffs = map(
         f -> map(
             c ->
-                evaluate(map_coefficients(cc -> finite_field(cc), numerator(c)), point) // evaluate(
-                    map_coefficients(cc -> finite_field(cc), denominator(c)),
-                    point
-                ),
+                evaluate(map_coefficients(cc -> ff(cc), numerator(c)), point) //
+                evaluate(map_coefficients(cc -> ff(cc), denominator(c)), point),
             collect(coefficients(f))
         ),
         state.param_basis
