@@ -37,6 +37,7 @@ ParamPunPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
 ```
 """
 function paramgb(polys::Vector{T}; kwargs...) where {T}
+    @assert !isempty(polys) "Empty input is not supported"
     paramgb(BasicBlackboxIdeal(polys); kwargs...)
 end
 

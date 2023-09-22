@@ -25,10 +25,10 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
 
     function BasicBlackboxIdeal(polys::Vector{T}) where {T}
         @assert !isempty(polys)
-        polys = filter(!iszero, polys)
-        @debug "Constructing a blackbox from $(length(polys)) input polynomials"
         Rx = parent(polys[1])
         Ra = base_ring(Rx)
+        polys = filter(!iszero, polys)
+        @debug "Constructing a blackbox from $(length(polys)) input polynomials"
         if Ra isa Nemo.FracField
             Ra = base_ring(Ra)
             Rlifted, _ =

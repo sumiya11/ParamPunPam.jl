@@ -33,6 +33,11 @@ function test_paramgb(cases, answers; kwargs...)
 end
 
 @testset "GB over Q(a...)" begin
+    Ra, (a, b) = PolynomialRing(Nemo.QQ, ["a", "b"])
+    Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"])
+    @test ParamPunPam.paramgb([Rx(2)]) == [Rx(1)]
+    @test_broken ParamPunPam.paramgb([Rx(0)]) == [Rx(1)]
+
     for interpolator in interpolators_to_test
         for param_ord in [:lex, :deglex, :degrevlex]
             for up_to_degree in [(Inf, Inf), (1, 1), (2, 2), (4, 4), (8, 8), (16, 16)]
