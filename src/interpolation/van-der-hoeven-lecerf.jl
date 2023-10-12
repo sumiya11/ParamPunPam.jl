@@ -181,7 +181,6 @@ function interpolate!(
     Rhom = Ni.ring
     Nys = Vector{elem_type(K)}(undef, 2T)
     Dys = Vector{elem_type(K)}(undef, 2T)
-
     @inbounds for i in 0:(2T - 1)
         fij = evaluations[((i) * (Nd + Dd + 2) + 1):((i + 1) * (Nd + Dd + 2))]
         fij = map(cξ -> cξ[1] * cξ[2]^(Nd - Dd), zip(fij, ωξij0_T[i + 1]))
@@ -215,8 +214,8 @@ function interpolate!(
     # T*n*log(q)
     normalization_factor = trailing_coefficient(den)
     if !iszero(normalization_factor)
-        num = map_coefficients(c -> div(c, normalization_factor), num)
-        den = map_coefficients(c -> div(c, normalization_factor), den)
+        num = map_coefficients(c -> div(c, normalization_factor), num, parent=R)
+        den = map_coefficients(c -> div(c, normalization_factor), den, parent=R)
     end
     success, num, den
 end

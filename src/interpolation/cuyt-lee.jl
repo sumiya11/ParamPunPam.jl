@@ -272,8 +272,8 @@ function interpolate!(
     Q = evaluate(Q, undilated)
     normalization_factor = trailing_coefficient(Q)
     if !iszero(normalization_factor)
-        P = map_coefficients(c -> div(c, normalization_factor), P)
-        Q = map_coefficients(c -> div(c, normalization_factor), Q)
+        P = map_coefficients(c -> div(c, normalization_factor), P, parent=R)
+        Q = map_coefficients(c -> div(c, normalization_factor), Q, parent=R)
     end
     success, P, Q
 end

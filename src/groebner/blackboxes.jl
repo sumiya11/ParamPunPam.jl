@@ -2,7 +2,7 @@
 """
     AbstractBlackboxIdeal
 
-Blackbox ideals in `Q(x)[y]` that can be evaluated at `x` modulo a prime.
+Blackbox ideals in `K(x)[y]` that can be evaluated at `x`.
 
 ## Interface
 

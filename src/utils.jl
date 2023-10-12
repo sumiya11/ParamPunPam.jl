@@ -11,6 +11,7 @@ const _runtime_data = Dict()
 # Progress bars
 const _progressbar_color = :cyan
 const _progressbar_value_color = :cyan # :light_grey
+const _progressbar_spinner = "⌜⌝⌟⌞"
 const _is_progressbar_enabled_globally = Ref{Bool}(true)
 enable_progressbar(flag::Bool) = _is_progressbar_enabled_globally[] = flag
 is_progressbar_enabled() =

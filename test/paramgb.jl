@@ -158,7 +158,7 @@ end
     end
 end
 
-@testset "Orderings" begin
+@testset "Monomial orderings" begin
     for interpolator in interpolators_to_test
         Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
         R, (x1, x2, x3) = PolynomialRing(
@@ -261,7 +261,7 @@ end
     end
 end
 
-@testset "Multi-modular" begin
+@testset "Multi-modular over the rationals" begin
     Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
     R, (x1, x2, x3) =
         PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)

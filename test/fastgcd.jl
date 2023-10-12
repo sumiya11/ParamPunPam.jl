@@ -119,7 +119,7 @@ end
             5(z + 5)^2 // 17(z),
             (z + 18) // 18,
             (18z + 1) // 18,
-            (-(z + 19)*(z + 17) + (z + 20)*(z + 21)) // R(1)
+            (-(z + 19) * (z + 17) + (z + 20) * (z + 21)) // R(1)
         ]
         evalfrac(f, x) = evaluate(numerator(f), x) // evaluate(denominator(f), x)
         for case in cases
