@@ -1,3 +1,6 @@
+# https://symbolicdata.github.io/PolynomialSystems
+# https://github.com/symbolicdata/data
+
 using Nemo
 
 ###
@@ -43,3 +46,16 @@ system = [
 ]
 
 @time ParamPunPam.paramgb(system)
+
+###
+# source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Vermeer.xml
+
+using Groebner
+R, (w, v, u, y, x) = PolynomialRing(QQ, [:w, :v, :u, :y, :x])
+system = [
+    v^2 + u^2 - 2 * v * y + y^2 - 2 * u * x + x^2 - 1,
+    -u^3 + v^2,
+    -3 * v * u^2 + 3 * u^2 * y - 2 * v * u + 2 * v * x,
+    6 * w^2 * v * u^2 - 3 * w * u^2 - 2 * w * v + 1
+]
+@time groebner(system);
