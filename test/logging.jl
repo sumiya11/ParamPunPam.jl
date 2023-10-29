@@ -35,8 +35,8 @@ loggers_to_test = [
     version_agnostic_logger(ConsoleLogger, Logging.Debug),
     version_agnostic_logger(SimpleLogger, Logging.Info),
     version_agnostic_logger(SimpleLogger, Logging.Warn),
-    version_agnostic_logger(MyLogger, Logging.Debug),
-    version_agnostic_logger(MyLogger, Logging.Warn)
+    MyLogger(Logging.Debug),
+    MyLogger(Logging.Warn)
 ]
 
 @testset "Generic logging" begin
