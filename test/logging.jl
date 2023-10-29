@@ -1,8 +1,16 @@
 using Logging
 
+function version_agnostic_logger(T, level, stream=stdout)
+    @static if VERSION >= v"1.7.0"
+        T(level)
+    else
+        T(stream, level)
+    end
+end
+
 struct MyLogger <: Logging.AbstractLogger
     _logger::Logging.ConsoleLogger
-    MyLogger(loglevel) = new(Logging.ConsoleLogger(loglevel))
+    MyLogger(loglevel) = new(version_agnostic_logger(Logging.ConsoleLogger, loglevel))
 end
 
 Logging.min_enabled_level(logger::MyLogger) = Logging.min_enabled_level(logger._logger)
@@ -22,13 +30,13 @@ Logging.handle_message(logger, level, message, _module, group, id, file, line; k
     )
 
 loggers_to_test = [
-    ConsoleLogger(Logging.Warn),
-    ConsoleLogger(Logging.Info),
-    ConsoleLogger(Logging.Debug),
-    SimpleLogger(Logging.Info),
-    SimpleLogger(Logging.Warn),
-    MyLogger(Logging.Debug),
-    MyLogger(Logging.Warn)
+    version_agnostic_logger(ConsoleLogger, Logging.Warn),
+    version_agnostic_logger(ConsoleLogger, Logging.Info),
+    version_agnostic_logger(ConsoleLogger, Logging.Debug),
+    version_agnostic_logger(SimpleLogger, Logging.Info),
+    version_agnostic_logger(SimpleLogger, Logging.Warn),
+    version_agnostic_logger(MyLogger, Logging.Debug),
+    version_agnostic_logger(MyLogger, Logging.Warn)
 ]
 
 @testset "Generic logging" begin
@@ -45,5 +53,6 @@ loggers_to_test = [
     global_logger(MyLogger(Logging.Debug))
     @test_logs ParamPunPam.paramgb(F)
 
-    global_logger(Logging.ConsoleLogger(Logging.Info))
+    newlogger = version_agnostic_logger(Logging.ConsoleLogger, Logging.Info)
+    global_logger(newlogger)
 end
