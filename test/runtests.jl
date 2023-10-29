@@ -11,6 +11,6 @@ using ParamPunPam
     @includetests ["ben-or-tiwari", "interpolators"]
     @includetests ["blackbox"]
     @includetests ["utils"]
-    @includetests ["paramgb"]
+    @includetests ["paramgb", "logging"]
     @includetests ["regressions"]
 end
