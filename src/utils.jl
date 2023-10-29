@@ -26,8 +26,8 @@ function evaluate_frac(f, x)
 end
 
 function groebner_loglevel()
-    if current_logger().min_level < Logging.Info
-        -3
+    if Logging.min_enabled_level(current_logger()) < Logging.Info
+        -2
     else
         0
     end
