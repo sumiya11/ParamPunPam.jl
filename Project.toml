@@ -1,7 +1,7 @@
 name = "ParamPunPam"
 uuid = "3e851597-e36f-45a9-af0a-b7781937992f"
 authors = ["sumiya11", "pogudingleb"]
-version = "0.1.0"
+version = "0.2.2"
 
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
@@ -13,9 +13,9 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
-AbstractAlgebra = "0.27, 0.28, 0.29, 0.30, 0.31"
-Groebner = "0.3, 0.4"
-Nemo = "0.32, 0.33, 0.34, 0.35"
+AbstractAlgebra = "0.27, 0.28, 0.29, 0.30, 0.31, 0.32, 0.33"
+Groebner = "0.3, 0.4, 0.5"
+Nemo = "0.32, 0.33, 0.34, 0.35, 0.36, 0.37"
 Primes = "0.5"
 ProgressMeter = "1.7"
 TestSetExtensions = "2"
