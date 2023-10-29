@@ -170,7 +170,7 @@ function discover_shape!(state, modular; η=2)
     # Guess the shape for 1 lucky prime:
     reduce_mod_p!(blackbox, modular.finite_field)
     prog = ProgressUnknown(
-        "# Computing specializations.. ",
+        desc="# Computing specializations.. ",
         spinner=true,
         dt=0.3,
         enabled=is_progressbar_enabled(),
@@ -251,7 +251,7 @@ function discover_total_degrees!(state, modular, up_to_degree)
     all_interpolated = false
     maybe_all_interpolated = false
     prog = ProgressUnknown(
-        "# Computing specializations.. ",
+        desc="# Computing specializations.. ",
         spinner=true,
         dt=0.3,
         enabled=is_progressbar_enabled(),
@@ -409,7 +409,7 @@ function interpolate_exponents!(
     Interpolating for degrees:
     Numerator: $Nd, Denominator: $Dd"""
     prog = ProgressUnknown(
-        "# Computing specializations..",
+        desc="# Computing specializations..",
         spinner=true,
         dt=0.3,
         enabled=is_progressbar_enabled(),

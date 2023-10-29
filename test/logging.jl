@@ -44,4 +44,6 @@ loggers_to_test = [
 
     global_logger(MyLogger(Logging.Debug))
     @test_logs ParamPunPam.paramgb(F)
+
+    global_logger(Logging.ConsoleLogger(Logging.Info))
 end
