@@ -1,7 +1,7 @@
 name = "ParamPunPam"
 uuid = "3e851597-e36f-45a9-af0a-b7781937992f"
 authors = ["sumiya11", "pogudingleb"]
-version = "0.2.3"
+version = "0.2.4"
 
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
