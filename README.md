@@ -6,7 +6,7 @@
 
 ParamPunPam.jl computes Groebner bases in $\mathbb{Q}(\mathbf{a})[\mathbf{x}]$, where $\mathbf{a}$ are treated as transcendental numbers.
 
-ParamPunPam.jl is primarily designed to work in cases where the coefficients of the basis are sparse and of low degree.
+ParamPunPam.jl is primarily designed to work in cases when the coefficients of the basis are sparse and of low degree.
 
 You can install ParamPunPam.jl with the following command in Julia:
 
