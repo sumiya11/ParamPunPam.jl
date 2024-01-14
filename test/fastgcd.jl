@@ -1,4 +1,4 @@
-FIELDS = [Nemo.GF(2^31 - 1), Nemo.GF(2^62 + 135)]
+FIELDS = [Nemo.Native.GF(2^31 - 1), Nemo.Native.GF(2^62 + 135)]
 
 @testset "Fast gcd" begin
     for ground in FIELDS

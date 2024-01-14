@@ -14,7 +14,7 @@ Uses Ben-or and Tiwari algorithm with the Kronecker substitution approach.
 
 ```julia
 using Nemo
-R, (x1, x2, x3) = Nemo.GF(2^62 + 135)["x1", "x2", "x3"]
+R, (x1, x2, x3) = Nemo.Native.GF(2^62 + 135)["x1", "x2", "x3"]
 
 poly = x1 * x2 + x2 * x3
 

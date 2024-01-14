@@ -1,5 +1,5 @@
 @testset "Rational reconstruction" begin
-    Rff, (a, b, c) = GF(2^31 - 1)["x", "y", "z"]
+    Rff, (a, b, c) = Nemo.Native.GF(2^31 - 1)["x", "y", "z"]
     Rqq, (aqq, bqq, cqq) = QQ["x", "y", "z"]
     cases = [
         (poly=Rff(1), ans=Rqq(1)),

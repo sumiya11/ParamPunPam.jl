@@ -1,6 +1,6 @@
 
 @testset "Baby-step-giant-step, Pohlig Hellman" begin
-    F = Nemo.GF(17)
+    F = Nemo.Native.GF(17)
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
     ord = 16
@@ -17,7 +17,7 @@
             @test x == d
         end
     end
-    F = Nemo.GF(101)
+    F = Nemo.Native.GF(101)
     ord = 100
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
@@ -35,7 +35,7 @@
             @test x == d
         end
     end
-    F = Nemo.GF(2^16 + 1)
+    F = Nemo.Native.GF(2^16 + 1)
     ord = 2^16
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
@@ -50,7 +50,7 @@
             @test x == d
         end
     end
-    F = Nemo.GF(3 * 2^30 + 1)
+    F = Nemo.Native.GF(3 * 2^30 + 1)
     ord = 3 * 2^30
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
@@ -65,7 +65,7 @@
             @test x == d
         end
     end
-    F = Nemo.GF(2^62 + 135)
+    F = Nemo.Native.GF(2^62 + 135)
     ord = 2^62 + 134
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
@@ -83,7 +83,7 @@
 end
 
 @testset "Discrete log, base isn't a generator" begin
-    F = Nemo.GF(17)
+    F = Nemo.Native.GF(17)
     ord = 16
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
@@ -104,7 +104,7 @@ end
         end
     end
 
-    F = Nemo.GF(101)
+    F = Nemo.Native.GF(101)
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
     g = F(83) # g is a generator

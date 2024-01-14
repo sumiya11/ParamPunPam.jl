@@ -1,4 +1,4 @@
-FIELDS = [Nemo.GF(2^62 + 135), Nemo.GF(2^31 - 1),]
+FIELDS = [Nemo.Native.GF(2^62 + 135), Nemo.Native.GF(2^31 - 1)]
 
 @testset "Univariate interpolate" begin
     for ground in FIELDS
