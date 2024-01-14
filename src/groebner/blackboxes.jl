@@ -36,7 +36,7 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
             polys = liftcoeffs(polys, Rlifted)
         end
         K = base_ring(Ra)
-        @assert K isa Nemo.FracField{Nemo.fmpz} "Only Nemo.QQ as a ground field is supported"
+        @assert K isa Nemo.FracField{Nemo.ZZRingElem} "Only Nemo.QQ as a ground field is supported"
         new{eltype(polys)}(polys, nothing)
     end
 end
