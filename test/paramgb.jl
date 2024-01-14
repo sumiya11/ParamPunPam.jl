@@ -49,7 +49,10 @@ end
                 )
                 # test that invalid keyword arguments are reported.
                 # Notice `up_to_degreeS`.
-                @test_throws AssertionError ParamPunPam.paramgb([x], up_to_degrees=(3, 3))
+                @test_throws AssertionError ParamPunPam.paramgb(
+                    [x],
+                    up_to_degrees=(3, 3)
+                ) == [x]
 
                 cases = [
                     [x, x + a],

@@ -25,14 +25,14 @@ mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
         polyvars = gens(Rx)
         K = base_ring(Ra)
         @debug "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
-        PolyFF = Nemo.gfp_mpoly
+        PolyFF = Nemo.fpMPolyRingElem
         PolyFracQQ = AbstractAlgebra.Generic.MPoly{
             AbstractAlgebra.Generic.Frac{Nemo.QQMPolyRingElem}
         }
         FF = Nemo.fpField
         new{Blackbox, FF, PolyFF, PolyFracQQ, typeof(ord)}(
             blackbox,
-            Vector{Vector{Nemo.gfp_mpoly}}(),
+            Vector{Vector{Nemo.fpMPolyRingElem}}(),
             Vector{Vector{Tuple{Int, Int}}}(),
             Vector{Vector{Tuple{PolyFF, PolyFF}}}(),
             Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(),
