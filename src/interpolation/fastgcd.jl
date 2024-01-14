@@ -115,8 +115,8 @@ function _fastgcd(r0, r1, k)
 end
 
 function standardize(g, f)
-    !ismonic(g) && (g = divexact(g, leading_coefficient(g)))
-    !ismonic(f) && (f = divexact(f, leading_coefficient(f)))
+    !Nemo.is_monic(g) && (g = divexact(g, leading_coefficient(g)))
+    !Nemo.is_monic(f) && (f = divexact(f, leading_coefficient(f)))
     if degree(g) < degree(f)
         g, f = f, g
     end

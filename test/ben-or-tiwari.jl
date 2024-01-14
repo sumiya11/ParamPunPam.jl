@@ -1,7 +1,7 @@
 
 cases = []
 
-R, (x1, x2, x3) = PolynomialRing(Nemo.Native.GF(2^62 + 135), ["x1", "x2", "x3"])
+R, (x1, x2, x3) = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x1", "x2", "x3"])
 append!(
     cases,
     [
@@ -22,7 +22,7 @@ append!(
     ]
 )
 
-R, x = PolynomialRing(Nemo.Native.GF(2^62 + 135), ["x$i" for i in 1:10])
+R, x = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x$i" for i in 1:10])
 append!(
     cases,
     [
@@ -38,7 +38,7 @@ append!(
     ]
 )
 
-R, x = PolynomialRing(Nemo.Native.GF(2^62 + 135), ["x$i" for i in 1:30])
+R, x = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x$i" for i in 1:30])
 append!(
     cases,
     [
@@ -51,7 +51,7 @@ append!(
 
 @testset "Ben-or-Tiwari, Primes & Kronecker" begin
     for interpolator in [ParamPunPam.PrimesBenOrTiwari, ParamPunPam.KronBenOrTiwari]
-        R, (x1, x2, x3) = PolynomialRing(Nemo.Native.GF(2^62 + 135), ["x1", "x2", "x3"])
+        R, (x1, x2, x3) = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x1", "x2", "x3"])
         poly = 1x1^4 + 2x2 * x3 * x1^20 + 3x3 + 1
         T, D = 4, 1
         bot = interpolator(R, T, D)

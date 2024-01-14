@@ -1,6 +1,6 @@
 cases = []
 
-R, (x1, x2) = PolynomialRing(Nemo.Native.GF(2^62 + 135), ["x1", "x2"])
+R, (x1, x2) = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x1", "x2"])
 append!(
     cases,
     [
@@ -20,10 +20,10 @@ append!(
 )
 
 R, (x0, x1, x2, x3, x4) =
-    PolynomialRing(Nemo.Native.GF(2^62 + 135), ["x0", "x1", "x2", "x3", "x4"])
+    polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x0", "x1", "x2", "x3", "x4"])
 append!(cases, [(x1 * x4 - x2 * x3) // R(1)])
 
-R, xi = PolynomialRing(Nemo.Native.GF(2^62 + 135), ["x$i" for i in 1:10])
+R, xi = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x$i" for i in 1:10])
 append!(
     cases,
     [

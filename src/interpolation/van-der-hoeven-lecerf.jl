@@ -46,7 +46,7 @@ mutable struct VanDerHoevenLecerf{Ring, UnivRing, FiniteFieldElem}
         n = nvars(ring)
         @assert length(Dds) == length(Nds) == n
         K = base_ring(ring)
-        Runiv, _ = Nemo.PolynomialRing(K, "u")
+        Runiv, _ = Nemo.polynomial_ring(K, "u")
         cauchy = CauchyInterpolator(Runiv, Nd, Dd)
         ringhom = homogenize(ring)
         Nds = vcat(Nd, Nds)

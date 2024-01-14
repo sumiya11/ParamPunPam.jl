@@ -1,8 +1,8 @@
 using Nemo
 
-Rparam, (a1, a2, a3, a4, a5, a6) = PolynomialRing(Nemo.QQ, ["a$i" for i in 1:6])
+Rparam, (a1, a2, a3, a4, a5, a6) = polynomial_ring(Nemo.QQ, ["a$i" for i in 1:6])
 R, (x1, x2, x3) =
-    PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
+    polynomial_ring(Nemo.fraction_field(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
 f = [
     x1 * x2^2 + (a1 + a2 + a3) * x1 * x3^2 - (a2 + a5 + a6),
     a3 * a5 * a6^2 * x1^2 * x2 + (a1 + a2) * x2 * x3^2 - a2 * x2 + a1,

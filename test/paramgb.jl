@@ -33,17 +33,17 @@ function test_paramgb(cases, answers; kwargs...)
 end
 
 @testset "GB over Q(a...)" begin
-    Ra, (a, b) = PolynomialRing(Nemo.QQ, ["a", "b"])
-    Rx, (x, y, z) = PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"])
+    Ra, (a, b) = polynomial_ring(Nemo.QQ, ["a", "b"])
+    Rx, (x, y, z) = polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"])
     @test ParamPunPam.paramgb([Rx(2)]) == [Rx(1)]
     @test_broken ParamPunPam.paramgb([Rx(0)]) == [Rx(1)]
 
     for interpolator in interpolators_to_test
         for param_ord in [:lex, :deglex, :degrevlex]
             for up_to_degree in [(Inf, Inf), (1, 1), (2, 2), (4, 4), (8, 8), (16, 16)]
-                Ra, (a, b) = PolynomialRing(Nemo.QQ, ["a", "b"], ordering=param_ord)
-                Rx, (x, y, z) = PolynomialRing(
-                    Nemo.FractionField(Ra),
+                Ra, (a, b) = polynomial_ring(Nemo.QQ, ["a", "b"], ordering=param_ord)
+                Rx, (x, y, z) = polynomial_ring(
+                    Nemo.fraction_field(Ra),
                     ["x", "y", "z"],
                     ordering=:degrevlex
                 )
@@ -93,14 +93,14 @@ end
                     rational_interpolator=interpolator
                 )
 
-                Ra, (a1, a2, a3, a4, a5) = PolynomialRing(
+                Ra, (a1, a2, a3, a4, a5) = polynomial_ring(
                     Nemo.QQ,
                     ["a1", "a2", "a3", "a4", "a5"],
                     ordering=param_ord
                 )
                 a = [a1, a2, a3, a4, a5]
-                Rx, (x, y, z) = PolynomialRing(
-                    Nemo.FractionField(Ra),
+                Rx, (x, y, z) = polynomial_ring(
+                    Nemo.fraction_field(Ra),
                     ["x", "y", "z"],
                     ordering=:degrevlex
                 )
@@ -128,9 +128,10 @@ end
                     rational_interpolator=interpolator
                 )
 
-                Ra, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"], ordering=param_ord)
-                Rx, (x, y, z) = PolynomialRing(
-                    Nemo.FractionField(Ra),
+                Ra, (a, b, c) =
+                    polynomial_ring(Nemo.QQ, ["a", "b", "c"], ordering=param_ord)
+                Rx, (x, y, z) = polynomial_ring(
+                    Nemo.fraction_field(Ra),
                     ["x", "y", "z"],
                     ordering=:deglex
                 )
@@ -160,9 +161,9 @@ end
 
 @testset "Monomial orderings" begin
     for interpolator in interpolators_to_test
-        Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
-        R, (x1, x2, x3) = PolynomialRing(
-            Nemo.FractionField(Rparam),
+        Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
+        R, (x1, x2, x3) = polynomial_ring(
+            Nemo.fraction_field(Rparam),
             ["x1", "x2", "x3"],
             ordering=:degrevlex
         )
@@ -203,9 +204,12 @@ end
 
         # The order of output persists
         for ord in [:lex, :deglex, :degrevlex]
-            Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
-            R, (x1, x2, x3) =
-                PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=ord)
+            Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
+            R, (x1, x2, x3) = polynomial_ring(
+                Nemo.fraction_field(Rparam),
+                ["x1", "x2", "x3"],
+                ordering=ord
+            )
 
             cases = ([x1, x2, x3], [x1 + 2a, c * x2 + 3b, x3], [x1 + x2 + x3, x1 + x2, x1])
             for (gb_ord, var_to_index) in [
@@ -235,10 +239,10 @@ end
             Groebner.cyclicn(3, ordering=ord)
         ]
         for case in cases
-            Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
+            Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
             xs = gens(parent(case[1]))
             (R, xs_frac) =
-                PolynomialRing(Nemo.FractionField(Rparam), map(repr, xs), ordering=ord)
+                polynomial_ring(Nemo.fraction_field(Rparam), map(repr, xs), ordering=ord)
             gb_ords = []
             append!(gb_ords, [Groebner.DegLex(), Groebner.DegLex()])
             append!(gb_ords, [Groebner.DegLex(Random.shuffle(xs)) for _ in 1:10])
@@ -262,9 +266,12 @@ end
 end
 
 @testset "Multi-modular over the rationals" begin
-    Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
-    R, (x1, x2, x3) =
-        PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
+    Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
+    R, (x1, x2, x3) = polynomial_ring(
+        Nemo.fraction_field(Rparam),
+        ["x1", "x2", "x3"],
+        ordering=:degrevlex
+    )
     cases = [
         [x2^2 + (3 // 23) * x2 + (4 // 25) * x3, x1 + 5 // 7],
         [x1 + BigInt(2)^100, x2^2 - BigInt(2^31 + 1)^5],
@@ -286,9 +293,12 @@ end
 end
 
 @testset "Noon" begin
-    Rparam, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
-    R, (x1, x2, x3) =
-        PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
+    Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
+    R, (x1, x2, x3) = polynomial_ring(
+        Nemo.fraction_field(Rparam),
+        ["x1", "x2", "x3"],
+        ordering=:degrevlex
+    )
     f = [
         a * x1 * x2^2 + (a + c) * x1 * x3^2 - b * x1 + a,
         a * x1^2 * x2 + (a + b) * x2 * x3^2 - b * x2 + a,
@@ -296,9 +306,12 @@ end
     ]
     ParamPunPam.paramgb(f)
 
-    Rparam, (a1, a2, a3, a4, a5, a6) = PolynomialRing(Nemo.QQ, ["a$i" for i in 1:6])
-    R, (x1, x2, x3) =
-        PolynomialRing(Nemo.FractionField(Rparam), ["x1", "x2", "x3"], ordering=:degrevlex)
+    Rparam, (a1, a2, a3, a4, a5, a6) = polynomial_ring(Nemo.QQ, ["a$i" for i in 1:6])
+    R, (x1, x2, x3) = polynomial_ring(
+        Nemo.fraction_field(Rparam),
+        ["x1", "x2", "x3"],
+        ordering=:degrevlex
+    )
     f = [
         x1 * x2^2 + (a1 + a2 + a3) * x1 * x3^2 - (a2 + a5 + a6),
         x1^2 * x2 + (a1 + a2) * x2 * x3^2 - a2 * x2 + a1,
@@ -306,9 +319,9 @@ end
     ]
     ParamPunPam.paramgb(f)
 
-    Rparam, Ai = PolynomialRing(Nemo.QQ, ["A$i" for i in 1:7])
+    Rparam, Ai = polynomial_ring(Nemo.QQ, ["A$i" for i in 1:7])
     R, (x, y, z) =
-        PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
+        polynomial_ring(Nemo.fraction_field(Rparam), ["x", "y", "z"], ordering=:degrevlex)
     f = [
         sum(Ai) * x * y + (Ai[1] + Ai[6]) // (sum(Ai)),
         y * z - sum(Ai),

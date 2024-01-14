@@ -25,7 +25,7 @@ using ParamPunPam, Nemo
 
 # Create polynomial rings
 R_param, (a, b) = QQ["a", "b"]
-R, (x, y, z) = FractionField(R_param)["x", "y", "z"]
+R, (x, y, z) = fraction_field(R_param)["x", "y", "z"]
 
 # Polynomial system
 F = [

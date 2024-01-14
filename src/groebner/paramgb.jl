@@ -31,8 +31,8 @@ Supported keyword arguments:
 ```jldoctest
 using Nemo, ParamPunPam
 
-Rparam, (a, b) = PolynomialRing(QQ, ["a", "b"])
-R, (x, y, z) = PolynomialRing(FractionField(Rparam), ["x", "y", "z"])
+Rparam, (a, b) = polynomial_ring(QQ, ["a", "b"])
+R, (x, y, z) = polynomial_ring(fraction_field(Rparam), ["x", "y", "z"])
 
 ParamPunPam.paramgb([a*x^2 + 1, y^2*z + (1//b)*y])
 ```
@@ -217,7 +217,7 @@ function discover_total_degrees!(state, modular, up_to_degree)
     @debug "Specializing at random points to guess the total degrees in parameters.."
     blackbox = state.blackbox
     ord = state.gb_ordering
-    Ru, _ = PolynomialRing(modular.finite_field, :u)
+    Ru, _ = polynomial_ring(modular.finite_field, :u)
     K = base_ring(Ru)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
@@ -351,7 +351,7 @@ function interpolate_exponents!(
     reduce_mod_p!(blackbox, modular.finite_field)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
-    Ru, _ = PolynomialRing(modular.finite_field, symbols(Ra), ordering=Nemo.ordering(Ra))
+    Ru, _ = polynomial_ring(modular.finite_field, symbols(Ra), ordering=Nemo.ordering(Ra))
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape

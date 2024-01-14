@@ -32,7 +32,7 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
         if Ra isa Nemo.FracField
             Ra = base_ring(Ra)
             Rlifted, _ =
-                PolynomialRing(Ra, map(string, gens(Rx)), ordering=Nemo.ordering(Rx))
+                polynomial_ring(Ra, map(string, gens(Rx)), ordering=Nemo.ordering(Rx))
             polys = liftcoeffs(polys, Rlifted)
         end
         K = base_ring(Ra)

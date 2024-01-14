@@ -238,7 +238,7 @@ end
 # Some tests!
 begin
     R, (x, y, z) = Nemo.QQ["x", "y", "z"]
-    Ry, (a, b, c) = Nemo.FractionField(R)["a", "b", "c"]
+    Ry, (a, b, c) = Nemo.fraction_field(R)["a", "b", "c"]
     @assert repr(reduce_mod_p(x + 7y, Nemo.GF(5))) === "x + 2*y"
     @assert repr(specialize((x) * a + (z // y) * c, Nemo.QQ.([2, 3, 5]))) === "2*a + 5//3*c"
 
@@ -269,15 +269,15 @@ end
 
 # Over QQ(a...)
 begin
-    Rparam, (a, b) = PolynomialRing(Nemo.QQ, ["a", "b"])
+    Rparam, (a, b) = polynomial_ring(Nemo.QQ, ["a", "b"])
     R, (x, y, z) =
-        PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
+        polynomial_ring(Nemo.fraction_field(Rparam), ["x", "y", "z"], ordering=:degrevlex)
     F = [x^2 + x + (a + 1)^5, x * y + b * y * z + 1 // (a * b)^12, x * z + z + b]
     gb, graph = learn_and_apply(F)
 
-    Rparam, (a, b) = PolynomialRing(Nemo.GF(2^31 - 1), ["a", "b"])
+    Rparam, (a, b) = polynomial_ring(Nemo.GF(2^31 - 1), ["a", "b"])
     R, (x, y, z) =
-        PolynomialRing(Nemo.FractionField(Rparam), ["x", "y", "z"], ordering=:degrevlex)
+        polynomial_ring(Nemo.fraction_field(Rparam), ["x", "y", "z"], ordering=:degrevlex)
     F = [x^2 + x + (a + 1)^5, x * y + b * y * z + 1 // (a * b)^12, x * z + z + b]
     gb, graph = learn_and_apply(F)
     # also correct
@@ -285,8 +285,8 @@ end;
 
 # Interpolation approach fails here, as the degrees of parameters approach 15-20.
 # begin
-#     Rparam, a = PolynomialRing(Nemo.QQ, ["a$i" for i in 1:5])
-#     R, x = PolynomialRing(Nemo.FractionField(Rparam), ["x$i" for i in 1:5], ordering=:degrevlex)
+#     Rparam, a = polynomial_ring(Nemo.QQ, ["a$i" for i in 1:5])
+#     R, x = polynomial_ring(Nemo.fraction_field(Rparam), ["x$i" for i in 1:5], ordering=:degrevlex)
 #     F = [
 #         x[1]^2 + x[2] + (a[1] + a[2]),
 #         (a[3] * a[4] + 1) * x[1] * x[2] + a[2] * x[2] * x[3] + 1 // (a[1] * a[2])^2,
@@ -299,9 +299,9 @@ end;
 
 begin
     Ra, (beta, gamma, v, psi) =
-        PolynomialRing(Nemo.GF(2^31 - 1), ["beta", "gamma", "v", "psi"])
-    R, (t, y1, y2, y3, y4) = PolynomialRing(
-        Nemo.FractionField(Ra),
+        polynomial_ring(Nemo.GF(2^31 - 1), ["beta", "gamma", "v", "psi"])
+    R, (t, y1, y2, y3, y4) = polynomial_ring(
+        Nemo.fraction_field(Ra),
         ["t", "y1", "y2", "y3", "y4"],
         ordering=:degrevlex
     )

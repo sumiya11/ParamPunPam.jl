@@ -154,8 +154,8 @@ function reconstruct_rational!(state, modular)
     blackbox = state.blackbox
     Rorig = parent(blackbox)
     Rparam = parent_params(blackbox)
-    Rorig_frac, _ = PolynomialRing(
-        Nemo.FractionField(Rparam),
+    Rorig_frac, _ = polynomial_ring(
+        Nemo.fraction_field(Rparam),
         symbols(Rorig),
         ordering=Nemo.ordering(Rorig)
     )

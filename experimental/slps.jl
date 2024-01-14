@@ -101,7 +101,7 @@ function slp_to_func(slp, subs)
     func_expr
 end
 
-R, (x,) = PolynomialRing(QQ, ["x"])
+R, (x,) = polynomial_ring(QQ, ["x"])
 poly = (2x + 1)^80;
 
 slp, subs = poly_to_slp_1(poly);
@@ -117,7 +117,7 @@ func = eval(func_expr);
 @code_warntype func(100)
 
 R_univ, x_univ = QQ["t"]
-R, (x,) = PolynomialRing(QQ, ["x"])
+R, (x,) = polynomial_ring(QQ, ["x"])
 
 poly = (2x + 1)^80;
 poly_univ = (2x_univ + 1)^80;

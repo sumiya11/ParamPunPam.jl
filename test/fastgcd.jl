@@ -2,7 +2,7 @@ FIELDS = [Nemo.Native.GF(2^31 - 1), Nemo.Native.GF(2^62 + 135)]
 
 @testset "Fast gcd" begin
     for ground in FIELDS
-        R, x = PolynomialRing(ground, "x")
+        R, x = polynomial_ring(ground, "x")
         cases = [
             (R(0), R(1)),
             (R(4), R(0)),
@@ -36,7 +36,7 @@ end
 
 @testset "Pade approximation" begin
     for ground in FIELDS
-        R, x = PolynomialRing(ground, "x")
+        R, x = polynomial_ring(ground, "x")
         cases = [
             (R(1), R(0)),
             (R(4), R(0)),
@@ -96,7 +96,7 @@ end
 
 @testset "Cauchy interpolation" begin
     for ground in FIELDS
-        R, z = PolynomialRing(ground, "z")
+        R, z = polynomial_ring(ground, "z")
         cases = [
             (R(0)) // (R(1)),
             (R(10)) // (R(1)),

@@ -1,12 +1,12 @@
 
 const _random_number_bound = 2^10 - 1
 
-random_point(gf::Nemo.GaloisField) = rand(gf)
-random_point(gff::Nemo.GaloisFmpzField) = rand(gff)
-random_point(fqn::Nemo.FqNmodFiniteField) = rand(fqn)
-random_point(fqn::Nemo.FqFiniteField) = rand(fqn)
-random_point(::Nemo.FlintIntegerRing) = ZZ(rand(1:_random_number_bound))
-random_point(::Nemo.FlintRationalField) = QQ(random_point(ZZ))
+random_point(gf::Nemo.fpField) = rand(gf)
+random_point(gff::Nemo.FpField) = rand(gff)
+random_point(fqn::Nemo.fqPolyRepField) = rand(fqn)
+random_point(fqn::Nemo.FqField) = rand(fqn)
+random_point(::Nemo.ZZRing) = ZZ(rand(1:_random_number_bound))
+random_point(::Nemo.QQField) = QQ(random_point(ZZ))
 
 function random_point(ring)
     K = base_ring(ring)
@@ -30,14 +30,14 @@ function distinct_nonzero_points(field, L, prev=nothing)
 end
 
 homogenize(ring; varname="x0") = first(
-    PolynomialRing(
+    polynomial_ring(
         base_ring(ring),
         append!([varname], map(string, AbstractAlgebra.symbols(ring))),
         ordering=Nemo.ordering(ring)
     )
 )
 dehomogenize(ring) = first(
-    PolynomialRing(
+    polynomial_ring(
         base_ring(ring),
         map(string, AbstractAlgebra.symbols(ring))[2:end],
         ordering=Nemo.ordering(ring)
@@ -45,9 +45,9 @@ dehomogenize(ring) = first(
 )
 
 univariatize(::Type{Ring}, ring; varname="x") where {Ring <: AbstractAlgebra.MPolyRing} =
-    first(PolynomialRing(base_ring(ring), [varname]))
+    first(polynomial_ring(base_ring(ring), [varname]))
 univariatize(::Type{Ring}, ring; varname="x") where {Ring <: AbstractAlgebra.PolyRing} =
-    first(PolynomialRing(base_ring(ring), varname))
+    first(polynomial_ring(base_ring(ring), varname))
 
 function getboundsinfo(f)
     (

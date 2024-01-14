@@ -40,9 +40,9 @@ loggers_to_test = [
 ]
 
 @testset "Generic logging" begin
-    Ra, (a, b, c) = PolynomialRing(Nemo.QQ, ["a", "b", "c"])
+    Ra, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
     Rx, (x, y, z) =
-        PolynomialRing(Nemo.FractionField(Ra), ["x", "y", "z"], ordering=:degrevlex)
+        polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"], ordering=:degrevlex)
     F = [y + z + 2^10, x + a^2 // (b + c)]
 
     for logger in loggers_to_test

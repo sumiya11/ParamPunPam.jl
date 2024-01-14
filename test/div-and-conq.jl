@@ -2,7 +2,7 @@ FIELDS = [Nemo.Native.GF(2^62 + 135), Nemo.Native.GF(2^31 - 1)]
 
 @testset "Univariate interpolate" begin
     for ground in FIELDS
-        R, x = PolynomialRing(ground, "x")
+        R, x = polynomial_ring(ground, "x")
         cases = [
             R(0),
             R(4),
@@ -44,8 +44,8 @@ end
 
 @testset "Transposed Vandermonde solve" begin
     for ground in FIELDS
-        R, (x,) = PolynomialRing(ground, ["x"])
-        Runiv, xuniv = PolynomialRing(ground, "x")
+        R, (x,) = polynomial_ring(ground, ["x"])
+        Runiv, xuniv = polynomial_ring(ground, "x")
 
         # for t == T
         # so that the number of points equals the number of terms

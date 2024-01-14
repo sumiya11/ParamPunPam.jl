@@ -6,9 +6,9 @@ using Nemo
 ###
 # Source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Chou.302_1.xml
 
-P, (u1, u2, u3, u4, u5) = PolynomialRing(Nemo.QQ, [:u1, :u2, :u3, :u4, :u5])
+P, (u1, u2, u3, u4, u5) = polynomial_ring(Nemo.QQ, [:u1, :u2, :u3, :u4, :u5])
 R, (x1, x2, x3, x4, x5, x6, x7, x8) =
-    PolynomialRing(FractionField(P), [:x1, :x2, :x3, :x4, :x5, :x6, :x7, :x8])
+    polynomial_ring(fraction_field(P), [:x1, :x2, :x3, :x4, :x5, :x6, :x7, :x8])
 
 system = [
     -x5 * u3 + x6 * u2,
@@ -26,9 +26,9 @@ system = [
 ###
 # source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Simson_3.xml
 
-P, (u1, u2, u3, u4) = PolynomialRing(Nemo.QQ, [:u1, :u2, :u3, :u4])
-R, (x1, x2, x3, x4, x5, x6, x7, x8, x9) = PolynomialRing(
-    FractionField(P),
+P, (u1, u2, u3, u4) = polynomial_ring(Nemo.QQ, [:u1, :u2, :u3, :u4])
+R, (x1, x2, x3, x4, x5, x6, x7, x8, x9) = polynomial_ring(
+    fraction_field(P),
     [:x1, :x2, :x3, :x4, :x5, :x6, :x7, :x8, :x9],
     ordering=:degrevlex
 )
@@ -51,7 +51,7 @@ system = [
 # source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Vermeer.xml
 
 using Groebner
-R, (w, v, u, y, x) = PolynomialRing(QQ, [:w, :v, :u, :y, :x])
+R, (w, v, u, y, x) = polynomial_ring(QQ, [:w, :v, :u, :y, :x])
 system = [
     v^2 + u^2 - 2 * v * y + y^2 - 2 * u * x + x^2 - 1,
     -u^3 + v^2,

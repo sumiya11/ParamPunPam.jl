@@ -27,7 +27,7 @@ begin
 end
 
 K = GF(2^62 + 135)
-R, x = PolynomialRing(GF(2^62 + 135), ["x$i" for i in 1:15])
+R, x = polynomial_ring(GF(2^62 + 135), ["x$i" for i in 1:15])
 
 case =
     (2x[1] + 3x[2]^2 + 4sum(x) + 1) //
