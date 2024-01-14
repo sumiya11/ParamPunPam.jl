@@ -113,7 +113,7 @@ successful and `false`, otherwise.
 function rational_reconstruct_polynomial(ring, poly_ff)
     ff = base_ring(parent(poly_ff))
     modulo = BigInt(characteristic(ff))
-    bnd = Groebner.rational_reconstruction_bound(modulo)
+    bnd = Groebner.ratrec_reconstruction_bound(modulo)
     buf, buf1 = BigInt(), BigInt()
     buf2, buf3 = BigInt(), BigInt()
     u1, u2 = BigInt(), BigInt()
@@ -128,7 +128,7 @@ function rational_reconstruct_polynomial(ring, poly_ff)
         cz = BigInt(data(cfs_ff[i]))
         cq = cfs_qq[i]
         num, den = numerator(cq), denominator(cq)
-        success_ = Groebner.rational_reconstruction!(
+        success_ = Groebner.ratrec!(
             num,
             den,
             bnd,
@@ -164,7 +164,7 @@ function reconstruct_rational!(state, modular)
     Rparam_frac = base_ring(Rorig_frac)
     polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))
     modulo = modular.modulo
-    bnd = Groebner.rational_reconstruction_bound(modulo)
+    bnd = Groebner.ratrec_reconstruction_bound(modulo)
     buf, buf1 = BigInt(), BigInt()
     buf2, buf3 = BigInt(), BigInt()
     u1, u2 = BigInt(), BigInt()
@@ -183,7 +183,7 @@ function reconstruct_rational!(state, modular)
                 cz = param_coeffs_crt[i][j][1][k]
                 cq = Rational{BigInt}(0)
                 num, den = numerator(cq), denominator(cq)
-                success = Groebner.rational_reconstruction!(
+                success = Groebner.ratrec!(
                     num,
                     den,
                     bnd,
@@ -210,7 +210,7 @@ function reconstruct_rational!(state, modular)
                 cz = param_coeffs_crt[i][j][2][k]
                 cq = Rational{BigInt}(0)
                 num, den = numerator(cq), denominator(cq)
-                success = Groebner.rational_reconstruction!(
+                success = Groebner.ratrec!(
                     num,
                     den,
                     bnd,

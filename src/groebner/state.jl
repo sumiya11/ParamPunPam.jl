@@ -1,14 +1,14 @@
 
-mutable struct GroebnerState{Blackbox,FF,PolyFF,PolyFracQQ,OrderingGb}
+mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
     # original polynomials over Q(a)
     blackbox::Blackbox
     shape::Vector{Vector{PolyFF}}
     # total degrees of the parameters of the Groebner basis
-    param_degrees::Vector{Vector{Tuple{Int,Int}}}
+    param_degrees::Vector{Vector{Tuple{Int, Int}}}
     # exponents of the parameters of the Groebner basis
-    param_exponents::Vector{Vector{Tuple{PolyFF,PolyFF}}}
-    param_coeffs_crt::Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}
-    field_to_param_exponents::Dict{FF,Vector{Vector{Tuple{PolyFF,PolyFF}}}}
+    param_exponents::Vector{Vector{Tuple{PolyFF, PolyFF}}}
+    param_coeffs_crt::Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}
+    field_to_param_exponents::Dict{FF, Vector{Vector{Tuple{PolyFF, PolyFF}}}}
     # fully reconstructed basis
     param_basis::Vector{PolyFracQQ}
     # GB computation helpers
@@ -18,7 +18,7 @@ mutable struct GroebnerState{Blackbox,FF,PolyFF,PolyFracQQ,OrderingGb}
     function GroebnerState(
         blackbox::Blackbox,
         ord::Ord
-    ) where {Blackbox<:AbstractBlackboxIdeal,Ord}
+    ) where {Blackbox <: AbstractBlackboxIdeal, Ord}
         Rx = parent(blackbox)
         Ra = parent_params(blackbox)
         params = gens(Ra)
@@ -28,13 +28,13 @@ mutable struct GroebnerState{Blackbox,FF,PolyFF,PolyFracQQ,OrderingGb}
         PolyFF = Nemo.gfp_mpoly
         PolyFracQQ = Any
         FF = Any
-        new{Blackbox,FF,PolyFF,PolyFracQQ,typeof(ord)}(
+        new{Blackbox, FF, PolyFF, PolyFracQQ, typeof(ord)}(
             blackbox,
             Vector{Vector{Nemo.gfp_mpoly}}(),
-            Vector{Vector{Tuple{Int,Int}}}(),
-            Vector{Vector{Tuple{PolyFF,PolyFF}}}(),
-            Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}(),
-            Dict{FF,Vector{Vector{Tuple{PolyFF,PolyFF}}}}(),
+            Vector{Vector{Tuple{Int, Int}}}(),
+            Vector{Vector{Tuple{PolyFF, PolyFF}}}(),
+            Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(),
+            Dict{FF, Vector{Vector{Tuple{PolyFF, PolyFF}}}}(),
             Vector{PolyFracQQ}(),
             nothing,
             ord
@@ -54,10 +54,10 @@ function reconstruct_crt!(state, modular)
     if length(field_to_param_exponents) == 1
         shape = state.shape
         param_coeffs_crt =
-            Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}(undef, length(shape))
+            Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(undef, length(shape))
         for i in 1:length(param_coeffs_crt)
             param_coeffs_crt[i] =
-                Vector{Tuple{Vector{BigInt},Vector{BigInt}}}(undef, length(shape[i]))
+                Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}(undef, length(shape[i]))
             for j in 1:length(param_coeffs_crt[i])
                 P, Q = state.param_exponents[i][j]
                 Pcoeffs = map(c -> BigInt(data(c)), collect(coefficients(P)))
@@ -111,7 +111,7 @@ successful and `false`, otherwise.
 function rational_reconstruct_polynomial(ring, poly_ff)
     finite_field = base_ring(parent(poly_ff))
     modulo = BigInt(characteristic(finite_field))
-    bnd = Groebner.rational_reconstruction_bound(modulo)
+    bnd = Groebner.ratrec_reconstruction_bound(modulo)
     buf, buf1 = BigInt(), BigInt()
     buf2, buf3 = BigInt(), BigInt()
     u1, u2 = BigInt(), BigInt()
@@ -126,7 +126,7 @@ function rational_reconstruct_polynomial(ring, poly_ff)
         cz = BigInt(data(cfs_ff[i]))
         cq = cfs_qq[i]
         num, den = numerator(cq), denominator(cq)
-        success_ = Groebner.rational_reconstruction!(
+        success_ = Groebner.ratrec!(
             num,
             den,
             bnd,
@@ -162,7 +162,7 @@ function reconstruct_rational!(state, modular)
     Rparam_frac = base_ring(Rorig_frac)
     polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))
     modulo = modular.modulo
-    bnd = Groebner.rational_reconstruction_bound(modulo)
+    bnd = Groebner.ratrec_reconstruction_bound(modulo)
     buf, buf1 = BigInt(), BigInt()
     buf2, buf3 = BigInt(), BigInt()
     u1, u2 = BigInt(), BigInt()
@@ -181,7 +181,7 @@ function reconstruct_rational!(state, modular)
                 cz = param_coeffs_crt[i][j][1][k]
                 cq = Rational{BigInt}(0)
                 num, den = numerator(cq), denominator(cq)
-                success = Groebner.rational_reconstruction!(
+                success = Groebner.ratrec!(
                     num,
                     den,
                     bnd,
@@ -208,7 +208,7 @@ function reconstruct_rational!(state, modular)
                 cz = param_coeffs_crt[i][j][2][k]
                 cq = Rational{BigInt}(0)
                 num, den = numerator(cq), denominator(cq)
-                success = Groebner.rational_reconstruction!(
+                success = Groebner.ratrec!(
                     num,
                     den,
                     bnd,
