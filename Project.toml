@@ -14,7 +14,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
 AbstractAlgebra = "0.34, 0.35"
-Groebner = "0.6.3"
+Groebner = "0.6.3, 0.7"
 Logging = "1.6"
 Nemo = "0.38.3, 0.39"
 Primes = "0.5"
