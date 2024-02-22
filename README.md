@@ -37,7 +37,7 @@ F = [
 paramgb(F)
 
 # Returns
-3-element Vector{AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.Frac{fmpq_mpoly}}}:
+3-element Vector{AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.FracFieldElem{fmpq_mpoly}}}:
  z^2 + b//(a + 1)*z + b^2//(a + 1)
  y + (-a - 1)//(a^2*b^2 + a*b^4 + a*b^2)*z - 1//(a^2*b + a*b^3 + a*b)
  x + (-a - 1)//b*z

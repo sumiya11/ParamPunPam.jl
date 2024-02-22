@@ -75,7 +75,7 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     assess_correctness = get(kwargs, :assess_correctness, false)
     ordering = get(kwargs, :ordering, Groebner.InputOrdering())
     up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
-    ord = AbstractAlgebra.ordering(parent(blackbox))
+    ord = AbstractAlgebra.internal_ordering(parent(blackbox))
     # If no hint for degrees is given, then try to guess degrees
     if !haskey(kwargs, :up_to_degree)
         if !estimate_degrees
@@ -351,7 +351,11 @@ function interpolate_exponents!(
     reduce_mod_p!(blackbox, modular.finite_field)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
-    Ru, _ = polynomial_ring(modular.finite_field, symbols(Ra), ordering=Nemo.ordering(Ra))
+    Ru, _ = polynomial_ring(
+        modular.finite_field,
+        symbols(Ra),
+        internal_ordering=Nemo.internal_ordering(Ra)
+    )
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape

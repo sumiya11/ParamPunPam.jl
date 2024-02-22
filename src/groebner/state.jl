@@ -157,7 +157,7 @@ function reconstruct_rational!(state, modular)
     Rorig_frac, _ = polynomial_ring(
         Nemo.fraction_field(Rparam),
         symbols(Rorig),
-        ordering=Nemo.ordering(Rorig)
+        internal_ordering=Nemo.internal_ordering(Rorig)
     )
     Rparam_frac = base_ring(Rorig_frac)
     polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))

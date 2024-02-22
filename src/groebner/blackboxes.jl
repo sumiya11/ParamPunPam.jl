@@ -31,8 +31,11 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
         @debug "Constructing a blackbox from $(length(polys)) input polynomials"
         if Ra isa Nemo.FracField
             Ra = base_ring(Ra)
-            Rlifted, _ =
-                polynomial_ring(Ra, map(string, gens(Rx)), ordering=Nemo.ordering(Rx))
+            Rlifted, _ = polynomial_ring(
+                Ra,
+                map(string, gens(Rx)),
+                internal_ordering=Nemo.internal_ordering(Rx)
+            )
             polys = liftcoeffs(polys, Rlifted)
         end
         K = base_ring(Ra)

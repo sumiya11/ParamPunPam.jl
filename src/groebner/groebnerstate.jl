@@ -27,7 +27,7 @@ mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
         @debug "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
         PolyFF = Nemo.fpMPolyRingElem
         PolyFracQQ = AbstractAlgebra.Generic.MPoly{
-            AbstractAlgebra.Generic.Frac{Nemo.QQMPolyRingElem}
+            AbstractAlgebra.Generic.FracFieldElem{Nemo.QQMPolyRingElem}
         }
         FF = Nemo.fpField
         new{Blackbox, FF, PolyFF, PolyFracQQ, typeof(ord)}(
@@ -159,7 +159,7 @@ function reconstruct_rational!(state, modular)
     Rorig_frac, _ = polynomial_ring(
         Nemo.fraction_field(Rparam),
         symbols(Rorig),
-        ordering=Nemo.ordering(Rorig)
+        internal_ordering=Nemo.internal_ordering(Rorig)
     )
     Rparam_frac = base_ring(Rorig_frac)
     polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))

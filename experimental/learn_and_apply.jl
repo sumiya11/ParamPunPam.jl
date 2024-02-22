@@ -35,7 +35,7 @@ function learn_and_apply(polys)
         @info "Reduction modulo $(characteristic(FF))"
         polys_mod_p = map(f -> reduce_mod_p(f, FF), polys)
         basis_mod_p, graph = learn!(polys_mod_p)
-    elseif base_ring(R) isa AbstractAlgebra.Generic.FracField
+    elseif base_ring(R) isa AbstractAlgebra.Generic.FracFieldElemField
         # Over QQ(a...), specialize, reduce modulo p, and compute the graph
         @info "QQ(a...) path"
         point = Primes.nextprimes(17, nvars(base_ring(base_ring(R))))

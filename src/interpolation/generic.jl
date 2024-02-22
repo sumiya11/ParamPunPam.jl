@@ -33,14 +33,14 @@ homogenize(ring; varname="x0") = first(
     polynomial_ring(
         base_ring(ring),
         append!([varname], map(string, AbstractAlgebra.symbols(ring))),
-        ordering=Nemo.ordering(ring)
+        internal_ordering=Nemo.internal_ordering(ring)
     )
 )
 dehomogenize(ring) = first(
     polynomial_ring(
         base_ring(ring),
         map(string, AbstractAlgebra.symbols(ring))[2:end],
-        ordering=Nemo.ordering(ring)
+        internal_ordering=Nemo.internal_ordering(ring)
     )
 )
 
@@ -57,7 +57,7 @@ function getboundsinfo(f)
     )
 end
 
-function getboundsinfo(f::AbstractAlgebra.Generic.Frac)
+function getboundsinfo(f::AbstractAlgebra.Generic.FracFieldElem)
     nummi = getboundsinfo(numerator(f))
     denmi = getboundsinfo(denominator(f))
     (
