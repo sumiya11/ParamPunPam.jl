@@ -24,7 +24,7 @@ Supported keyword arguments:
 - `estimate_degrees`: If `true`, estimates the total degrees of parameters
   before starting the interpolation. Default is `true`.
 - `assess_correctness`: If `true`, check that the basis is correct with high
-  probability. Default is `false`.
+  probability. Default is `true`. **NOTE**:
 
 ## Example
 
@@ -72,7 +72,11 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
     rational_interpolator = get(kwargs, :rational_interpolator, :VanDerHoevenLecerf)
     @assert rational_interpolator in (:VanDerHoevenLecerf, :CuytLee)
     polynomial_interpolator = get(kwargs, :polynomial_interpolator, :PrimesBenOrTiwari)
-    assess_correctness = get(kwargs, :assess_correctness, false)
+    assess_correctness = get(kwargs, :assess_correctness, true)
+    if assess_correctness && up_to_degree != (Inf, Inf)
+        @debug "Turning off `assess_correctness` because `up_to_degree` was provided."
+        assess_correctness = false
+    end
     ordering = get(kwargs, :ordering, Groebner.InputOrdering())
     up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
     ord = AbstractAlgebra.internal_ordering(parent(blackbox))

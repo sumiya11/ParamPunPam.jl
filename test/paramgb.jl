@@ -285,7 +285,8 @@ end
         [x1 + (2^20 * a + c) * x3 - 2^21 * b^2, x2 + 2^19],
         [x1 + (2^40 * a + c) * x3 - 2^41 * b^2, x2 + 2^39],
         [x1 + (BigInt(2)^80 * a + c) * x3 - BigInt(2)^81 * b^2, x2 + BigInt(2)^79],
-        [x2^2 - x2 + 1, (2^30) * x1 + (2^31 + 5) * x2]
+        [x2^2 - x2 + 1, (2^30) * x1 + (2^31 + 5) * x2],
+        [x1 + BigInt(2)^1000]
     ]
     answers = [
         [x1 + 5 // 7, x2^2 + (3 // 23) * x2 + (4 // 25) * x3],
@@ -293,10 +294,14 @@ end
         [x2 + 2^19, x1 + (2^20 * a + c) * x3 - 2^21 * b^2],
         [x2 + 2^39, x1 + (2^40 * a + c) * x3 - 2^41 * b^2],
         [x2 + BigInt(2)^79, x1 + (BigInt(2)^80 * a + c) * x3 - BigInt(2)^81 * b^2],
-        [(2^30) * x1 + (2^31 + 5) * x2, x2^2 - x2 + 1]
+        [x1 + (2^31 + 5)//(2^30) * x2, x2^2 - x2 + 1],
+        [x1 + BigInt(2)^1000]
     ]
-    # test_paramgb(cases, answers)
-    @test_broken false
+    test_paramgb(cases, answers)
+
+    F = [x1 + a*b^3 // BigInt(2)^100 * x2]
+    ParamPunPam.paramgb(F)
+
 end
 
 @testset "Noon" begin

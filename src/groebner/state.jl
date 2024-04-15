@@ -54,10 +54,10 @@ function reconstruct_crt!(state, modular)
     if length(field_to_param_exponents) == 1
         shape = state.shape
         param_coeffs_crt =
-            Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(undef, length(shape))
+            Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}(undef, length(shape))
         for i in 1:length(param_coeffs_crt)
             param_coeffs_crt[i] =
-                Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}(undef, length(shape[i]))
+                Vector{Tuple{Vector{BigInt},Vector{BigInt}}}(undef, length(shape[i]))
             for j in 1:length(param_coeffs_crt[i])
                 P, Q = state.param_exponents[i][j]
                 Pcoeffs = map(c -> BigInt(data(c)), collect(coefficients(P)))
@@ -72,9 +72,10 @@ function reconstruct_crt!(state, modular)
     end
     buf, n1, n2, M, bigch, invm1, invm2 =
         BigInt(), BigInt(), BigInt(), BigInt(), BigInt(), BigInt(), BigInt()
-    Base.GMP.MPZ.set_ui!(bigch, char)
-    Base.GMP.MPZ.mul_ui!(M, modular.modulo, char)
-    Base.GMP.MPZ.gcdext!(buf, invm1, invm2, modular.modulo, bigch)
+    # Base.GMP.MPZ.set_ui!(bigch, char)
+    # Base.GMP.MPZ.mul_ui!(M, modular.modulo, char)
+    # Base.GMP.MPZ.gcdext!(buf, invm1, invm2, modular.modulo, bigch)
+    Groebner.crt_precompute!(M, n1, n2, invm1, modular.modulo, invm2, char)
     param_exponents = state.param_exponents
     param_coeffs_crt = state.param_coeffs_crt
     for i in 1:length(param_exponents)
@@ -83,13 +84,13 @@ function reconstruct_crt!(state, modular)
             for k in 1:length(param_exponents[i][j][1])
                 ca = param_coeffs_crt[i][j][1][k]
                 cf = UInt64(data(coeff(param_exponents[i][j][1], k)))
-                Groebner.CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
+                Groebner.crt!(M, buf, n1, n2, ca, invm1, cf, invm2)
                 Base.GMP.MPZ.set!(param_coeffs_crt[i][j][1][k], buf)
             end
             for k in 1:length(param_exponents[i][j][2])
                 ca = param_coeffs_crt[i][j][2][k]
                 cf = UInt(data(coeff(param_exponents[i][j][2], k)))
-                Groebner.CRT!(M, buf, n1, n2, ca, invm1, cf, invm2, modular.modulo, bigch)
+                Groebner.crt!(M, buf, n1, n2, ca, invm1, cf, invm2)
                 Base.GMP.MPZ.set!(param_coeffs_crt[i][j][2][k], buf)
             end
         end
@@ -244,6 +245,7 @@ function assess_correctness_mod_p(state, modular)
     # NOTE: in this state, ideally, this should always pass, since the modulo
     # we use to check correctness is the same as the one used to compute the
     # basis
+    find_next_lucky_prime!(modular)
     finite_field = modular.finite_field
     reduce_mod_p!(state.blackbox, finite_field)
     point = randluckyspecpoint(state, finite_field)
@@ -270,11 +272,11 @@ function assess_correctness_mod_p(state, modular)
     )
     @debug "Evaluated basis" param_basis_specialized
     @debug "Evaluated generators" generators_zp
-    if !isgroebner(param_basis_specialized)
+    if !isgroebner(param_basis_specialized, ordering=state.gb_ordering)
         @debug "Not a basis!"
         return false
     end
-    inclusion = normalform(param_basis_specialized, generators_zp)
+    inclusion = normalform(param_basis_specialized, generators_zp, ordering=state.gb_ordering)
     @debug "Inclusion in correctness assessment" inclusion
     all(iszero, inclusion)
 end
