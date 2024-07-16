@@ -111,40 +111,18 @@ successful and `false`, otherwise.
 """
 function rational_reconstruct_polynomial(ring, poly_ff)
     finite_field = base_ring(parent(poly_ff))
-    modulo = BigInt(characteristic(finite_field))
+    modulo = ZZBigInt(characteristic(finite_field))
     bnd = Groebner.ratrec_reconstruction_bound(modulo)
-    buf, buf1 = BigInt(), BigInt()
-    buf2, buf3 = BigInt(), BigInt()
-    u1, u2 = BigInt(), BigInt()
-    u3, v1 = BigInt(), BigInt()
-    v2, v3 = BigInt(), BigInt()
+    modulo_nemo = Nemo.ZZ(modulo)
+    bnd_nemo = Nemo.ZZ(bnd)
     cfs_ff = collect(coefficients(poly_ff))
-    cfs_qq = map(_ -> Rational{BigInt}(0), cfs_ff)
     cfs_rec = map(_ -> Nemo.QQ(0), cfs_ff)
     evs = collect(exponent_vectors(poly_ff))
     success = true
     for i in 1:length(cfs_ff)
-        cz = BigInt(data(cfs_ff[i]))
-        cq = cfs_qq[i]
-        num, den = numerator(cq), denominator(cq)
-        success_ = Groebner.ratrec!(
-            num,
-            den,
-            bnd,
-            buf,
-            buf1,
-            buf2,
-            buf3,
-            u1,
-            u2,
-            u3,
-            v1,
-            v2,
-            v3,
-            cz,
-            modulo
-        )
-        cfs_rec[i] = Nemo.QQ(cfs_qq[i])
+        cz = Nemo.ZZ(data(cfs_ff[i]))
+        success_, pq = Nemo.reconstruct(cz, modulo_nemo, bnd_nemo, bnd_nemo)
+        cfs_rec[i] = pq
         success = success && success_
     end
     poly_qq = ring(cfs_rec, evs)
@@ -164,11 +142,8 @@ function reconstruct_rational!(state, modular)
     polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))
     modulo = modular.modulo
     bnd = Groebner.ratrec_reconstruction_bound(modulo)
-    buf, buf1 = BigInt(), BigInt()
-    buf2, buf3 = BigInt(), BigInt()
-    u1, u2 = BigInt(), BigInt()
-    u3, v1 = BigInt(), BigInt()
-    v2, v3 = BigInt(), BigInt()
+    modulo_nemo = Nemo.ZZ(modulo)
+    bnd_nemo = Nemo.ZZ(bnd)
     param_coeffs_crt = state.param_coeffs_crt
     param_exponents = state.param_exponents
     @debug "Reconstruction" modulo bnd
@@ -179,54 +154,18 @@ function reconstruct_rational!(state, modular)
         for j in 1:length(param_coeffs_crt[i])
             rec_coeffs = Vector{Rational{BigInt}}(undef, length(param_coeffs_crt[i][j][1]))
             for k in 1:length(param_coeffs_crt[i][j][1])
-                cz = param_coeffs_crt[i][j][1][k]
-                cq = Rational{BigInt}(0)
-                num, den = numerator(cq), denominator(cq)
-                success = Groebner.ratrec!(
-                    num,
-                    den,
-                    bnd,
-                    buf,
-                    buf1,
-                    buf2,
-                    buf3,
-                    u1,
-                    u2,
-                    u3,
-                    v1,
-                    v2,
-                    v3,
-                    cz,
-                    modulo
-                )
-                rec_coeffs[k] = cq
+                cz = Nemo.ZZ(param_coeffs_crt[i][j][1][k])
+                success, pq = Nemo.reconstruct(cz, modulo_nemo, bnd_nemo, bnd_nemo)
+                rec_coeffs[k] = pq
                 !success && return false
             end
             exponent_vecs = collect(exponent_vectors(param_exponents[i][j][1]))
             param_num = Rparam(rec_coeffs, exponent_vecs)
             rec_coeffs = Vector{Rational{BigInt}}(undef, length(param_coeffs_crt[i][j][2]))
             for k in 1:length(param_coeffs_crt[i][j][2])
-                cz = param_coeffs_crt[i][j][2][k]
-                cq = Rational{BigInt}(0)
-                num, den = numerator(cq), denominator(cq)
-                success = Groebner.ratrec!(
-                    num,
-                    den,
-                    bnd,
-                    buf,
-                    buf1,
-                    buf2,
-                    buf3,
-                    u1,
-                    u2,
-                    u3,
-                    v1,
-                    v2,
-                    v3,
-                    cz,
-                    modulo
-                )
-                rec_coeffs[k] = cq
+                cz = Nemo.ZZ(param_coeffs_crt[i][j][2][k])
+                success, pq = Nemo.reconstruct(cz, modulo_nemo, bnd_nemo, bnd_nemo)
+                rec_coeffs[k] = pq
                 !success && return false
             end
             exponent_vecs = collect(exponent_vectors(param_exponents[i][j][2]))
