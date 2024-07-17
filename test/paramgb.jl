@@ -236,11 +236,11 @@ end
         # GB with no parameters coincides with the numerical GB
         ord = :degrevlex
         cases = [
-            Groebner.noonn(3, internal_ordering=ord),
-            Groebner.noonn(4, internal_ordering=ord),
-            Groebner.katsuran(3, internal_ordering=ord),
-            Groebner.katsuran(3, internal_ordering=ord),
-            Groebner.cyclicn(3, internal_ordering=ord)
+            Groebner.Examples.noonn(3, internal_ordering=ord),
+            Groebner.Examples.noonn(4, internal_ordering=ord),
+            Groebner.Examples.katsuran(3, internal_ordering=ord),
+            Groebner.Examples.katsuran(3, internal_ordering=ord),
+            Groebner.Examples.cyclicn(3, internal_ordering=ord)
         ]
         for case in cases
             Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])

@@ -111,7 +111,7 @@ successful and `false`, otherwise.
 """
 function rational_reconstruct_polynomial(ring, poly_ff)
     finite_field = base_ring(parent(poly_ff))
-    modulo = ZZBigInt(characteristic(finite_field))
+    modulo = BigInt(characteristic(finite_field))
     bnd = Groebner.ratrec_reconstruction_bound(modulo)
     modulo_nemo = Nemo.ZZ(modulo)
     bnd_nemo = Nemo.ZZ(bnd)
