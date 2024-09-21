@@ -163,10 +163,7 @@ function get_evaluation_points!(vdhl::VanDerHoevenLecerf)
     vdhl.points
 end
 
-function interpolate!(
-    vdhl::VanDerHoevenLecerf,
-    evaluations::Vector{FiniteFieldElem}
-) where {FiniteFieldElem}
+function interpolate!(vdhl::VanDerHoevenLecerf, evaluations::Vector{FiniteFieldElem}) where {FiniteFieldElem}
     T = vdhl.T
     R = vdhl.ring
     K = base_ring(R)

@@ -15,8 +15,7 @@ const _progressbar_spinner = "⌜⌝⌟⌞"
 const _is_progressbar_enabled_globally = Ref{Bool}(true)
 enable_progressbar(flag::Bool) = _is_progressbar_enabled_globally[] = flag
 is_progressbar_enabled() =
-    _is_progressbar_enabled_globally[] &&
-    Logging.Info <= Logging.min_enabled_level(current_logger()) < Logging.Warn
+    _is_progressbar_enabled_globally[] && Logging.Info <= Logging.min_enabled_level(current_logger()) < Logging.Warn
 
 # Some other utils..
 function evaluate_frac(f, x)

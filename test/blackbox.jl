@@ -2,8 +2,7 @@ using Nemo
 
 @testset "Blackbox" begin
     Ra, (a,) = polynomial_ring(Nemo.QQ, ["a"], internal_ordering=:degrevlex)
-    Rx, (x, y, z) =
-        polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"], internal_ordering=:degrevlex)
+    Rx, (x, y, z) = polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"], internal_ordering=:degrevlex)
 
     s = [(1 // a) * x + (1 // (a + 1)) * y, x + a // (a + 1)]
     bb = ParamPunPam.BasicBlackboxIdeal(s)

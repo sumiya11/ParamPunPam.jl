@@ -40,19 +40,11 @@ end
     for interpolator in interpolators_to_test
         for param_ord in [:lex, :deglex, :degrevlex]
             for up_to_degree in [(Inf, Inf), (1, 1), (2, 2), (4, 4), (8, 8), (16, 16)]
-                Ra, (a, b) =
-                    polynomial_ring(Nemo.QQ, ["a", "b"], internal_ordering=param_ord)
-                Rx, (x, y, z) = polynomial_ring(
-                    Nemo.fraction_field(Ra),
-                    ["x", "y", "z"],
-                    internal_ordering=:degrevlex
-                )
+                Ra, (a, b) = polynomial_ring(Nemo.QQ, ["a", "b"], internal_ordering=param_ord)
+                Rx, (x, y, z) = polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"], internal_ordering=:degrevlex)
                 # test that invalid keyword arguments are reported.
                 # Notice `up_to_degreeS`.
-                @test_throws AssertionError ParamPunPam.paramgb(
-                    [x],
-                    up_to_degrees=(3, 3)
-                ) == [x]
+                @test_throws AssertionError ParamPunPam.paramgb([x], up_to_degrees=(3, 3)) == [x]
 
                 cases = [
                     [x, x + a],
@@ -60,11 +52,7 @@ end
                     [x + a^2, x * y + a^10],
                     [x^2 + a^3 + 1],
                     [x^2 + a^2 + b^2 + a * b + 9],
-                    [
-                        x^2 - x + a * y^2 + a * z^2,
-                        a * x * y + a * y * z - y,
-                        x + a * y + a * z - 1
-                    ]
+                    [x^2 - x + a * y^2 + a * z^2, a * x * y + a * y * z - y, x + a * y + a * z - 1]
                 ]
                 answers = [
                     [Rx(1)],
@@ -74,39 +62,23 @@ end
                     [x^2 + a^2 + b^2 + a * b + 9],
                     [
                         x + a * y + a * z - 1,
-                        y * z + (a^2 + a) // (a^2 + 1) * z^2 - 1 // (a^3 + a) * y -
-                        a // (a^2 + 1) * z,
-                        y^2 +
-                        (-a^2 + 1) // (a^2 + 1) * z^2 +
-                        (-a + 1) // (a^2 + 1) * y +
-                        (a - 1) // (a^2 + 1) * z,
+                        y * z + (a^2 + a) // (a^2 + 1) * z^2 - 1 // (a^3 + a) * y - a // (a^2 + 1) * z,
+                        y^2 + (-a^2 + 1) // (a^2 + 1) * z^2 + (-a + 1) // (a^2 + 1) * y + (a - 1) // (a^2 + 1) * z,
                         z^3 +
-                        (-3 // 2 * a^5 + a^4 - a^3 + 1 // 2 * a^2 - 1 // 2 * a - 1 // 2) // (a^6 + 1 // 2 * a^5 + a^4 + a^3 + 1 // 2 * a) * z^2 +
-                        (1 // 2 * a^3 - 1 // 2) //
-                        (a^6 + 1 // 2 * a^5 + a^4 + a^3 + 1 // 2 * a) * y +
+                        (-3 // 2 * a^5 + a^4 - a^3 + 1 // 2 * a^2 - 1 // 2 * a - 1 // 2) //
+                        (a^6 + 1 // 2 * a^5 + a^4 + a^3 + 1 // 2 * a) * z^2 +
+                        (1 // 2 * a^3 - 1 // 2) // (a^6 + 1 // 2 * a^5 + a^4 + a^3 + 1 // 2 * a) * y +
                         (1 // 2 * a^4 - a^3 + 1 // 2 * a^2 - 1 // 2 * a + 1 // 2) //
                         (a^6 + 1 // 2 * a^5 + a^4 + a^3 + 1 // 2 * a) * z
                     ]
                 ]
                 test_paramgb(cases, answers, rational_interpolator=interpolator)
-                test_paramgb(
-                    cases,
-                    answers,
-                    up_to_degree=up_to_degree,
-                    rational_interpolator=interpolator
-                )
+                test_paramgb(cases, answers, up_to_degree=up_to_degree, rational_interpolator=interpolator)
 
-                Ra, (a1, a2, a3, a4, a5) = polynomial_ring(
-                    Nemo.QQ,
-                    ["a1", "a2", "a3", "a4", "a5"],
-                    internal_ordering=param_ord
-                )
+                Ra, (a1, a2, a3, a4, a5) =
+                    polynomial_ring(Nemo.QQ, ["a1", "a2", "a3", "a4", "a5"], internal_ordering=param_ord)
                 a = [a1, a2, a3, a4, a5]
-                Rx, (x, y, z) = polynomial_ring(
-                    Nemo.fraction_field(Ra),
-                    ["x", "y", "z"],
-                    internal_ordering=:degrevlex
-                )
+                Rx, (x, y, z) = polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"], internal_ordering=:degrevlex)
                 cases = [
                     [x, y + 1, z + 2],
                     [x + a1 * a2 - a3 * a4],
@@ -124,20 +96,10 @@ end
                     [(x - a1) * (y - a2) * (z - a3) * (x - a4) * (x - a5)]
                 ]
                 test_paramgb(cases, answers, rational_interpolator=interpolator)
-                test_paramgb(
-                    cases,
-                    answers,
-                    up_to_degree=up_to_degree,
-                    rational_interpolator=interpolator
-                )
+                test_paramgb(cases, answers, up_to_degree=up_to_degree, rational_interpolator=interpolator)
 
-                Ra, (a, b, c) =
-                    polynomial_ring(Nemo.QQ, ["a", "b", "c"], internal_ordering=param_ord)
-                Rx, (x, y, z) = polynomial_ring(
-                    Nemo.fraction_field(Ra),
-                    ["x", "y", "z"],
-                    internal_ordering=:deglex
-                )
+                Ra, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"], internal_ordering=param_ord)
+                Rx, (x, y, z) = polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"], internal_ordering=:deglex)
                 cases = [
                     [x + (a + b + c)^3 // (a * c * b)^2],
                     [x + a // b, y + b // a, z + (a + b) // c],
@@ -151,12 +113,7 @@ end
                     [z + a^25 // c, y + b^25 // a, x + a // b]
                 ]
                 test_paramgb(cases, answers, rational_interpolator=interpolator)
-                test_paramgb(
-                    cases,
-                    answers,
-                    up_to_degree=up_to_degree,
-                    rational_interpolator=interpolator
-                )
+                test_paramgb(cases, answers, up_to_degree=up_to_degree, rational_interpolator=interpolator)
             end
         end
     end
@@ -165,11 +122,7 @@ end
 @testset "Monomial orderings" begin
     for interpolator in interpolators_to_test
         Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
-        R, (x1, x2, x3) = polynomial_ring(
-            Nemo.fraction_field(Rparam),
-            ["x1", "x2", "x3"],
-            internal_ordering=:degrevlex
-        )
+        R, (x1, x2, x3) = polynomial_ring(Nemo.fraction_field(Rparam), ["x1", "x2", "x3"], internal_ordering=:degrevlex)
 
         f = [a * x1 - b * x2 + c * x3 - 1]
         gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex())
@@ -177,17 +130,9 @@ end
         gb2 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x2, x1, x3))
         @test gb2 == [-(a // b) * x1 + x2 - (c // b) * x3 + 1 // b]
 
-        f = [
-            x1 - a * b^2 + a^2 * b + a^3 + b^3,
-            x3 - (a * b^3 + b * a^3)^3,
-            x2 - a * b^3 + a^2 * b + a^4 + b^4
-        ]
+        f = [x1 - a * b^2 + a^2 * b + a^3 + b^3, x3 - (a * b^3 + b * a^3)^3, x2 - a * b^3 + a^2 * b + a^4 + b^4]
         gb = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x3, x2, x1))
-        @test gb == [
-            x1 - a * b^2 + a^2 * b + a^3 + b^3,
-            x2 - a * b^3 + a^2 * b + a^4 + b^4,
-            x3 - (a * b^3 + b * a^3)^3
-        ]
+        @test gb == [x1 - a * b^2 + a^2 * b + a^3 + b^3, x2 - a * b^3 + a^2 * b + a^4 + b^4, x3 - (a * b^3 + b * a^3)^3]
 
         f = [x2 + a, x1 + b, x3 + c]
         gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex())
@@ -208,11 +153,7 @@ end
         # The order of output persists
         for ord in [:lex, :deglex, :degrevlex]
             Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
-            R, (x1, x2, x3) = polynomial_ring(
-                Nemo.fraction_field(Rparam),
-                ["x1", "x2", "x3"],
-                internal_ordering=ord
-            )
+            R, (x1, x2, x3) = polynomial_ring(Nemo.fraction_field(Rparam), ["x1", "x2", "x3"], internal_ordering=ord)
 
             cases = ([x1, x2, x3], [x1 + 2a, c * x2 + 3b, x3], [x1 + x2 + x3, x1 + x2, x1])
             for (gb_ord, var_to_index) in [
@@ -244,11 +185,7 @@ end
         for case in cases
             Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
             xs = gens(parent(case[1]))
-            (R, xs_frac) = polynomial_ring(
-                Nemo.fraction_field(Rparam),
-                map(repr, xs),
-                internal_ordering=ord
-            )
+            (R, xs_frac) = polynomial_ring(Nemo.fraction_field(Rparam), map(repr, xs), internal_ordering=ord)
             gb_ords = []
             append!(gb_ords, [Groebner.DegLex(), Groebner.DegLex()])
             append!(gb_ords, [Groebner.DegLex(Random.shuffle(xs)) for _ in 1:10])
@@ -257,11 +194,7 @@ end
                 case_frac = map(f -> evaluate(f, xs_frac), case)
 
                 gb_numeric = Groebner.groebner(case, ordering=gb_ord)
-                gb_parametric = ParamPunPam.paramgb(
-                    case_frac,
-                    ordering=gb_ord,
-                    rational_interpolator=interpolator
-                )
+                gb_parametric = ParamPunPam.paramgb(case_frac, ordering=gb_ord, rational_interpolator=interpolator)
 
                 gb_numeric_frac = map(f -> evaluate(f, xs_frac), gb_numeric)
 
@@ -273,11 +206,7 @@ end
 
 @testset "Multi-modular over the rationals" begin
     Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
-    R, (x1, x2, x3) = polynomial_ring(
-        Nemo.fraction_field(Rparam),
-        ["x1", "x2", "x3"],
-        internal_ordering=:degrevlex
-    )
+    R, (x1, x2, x3) = polynomial_ring(Nemo.fraction_field(Rparam), ["x1", "x2", "x3"], internal_ordering=:degrevlex)
     cases = [
         [x2^2 + (3 // 23) * x2 + (4 // 25) * x3, x1 + 5 // 7],
         [x1 + BigInt(2)^100, x2^2 - BigInt(2^31 + 1)^5],
@@ -293,23 +222,18 @@ end
         [x2 + 2^19, x1 + (2^20 * a + c) * x3 - 2^21 * b^2],
         [x2 + 2^39, x1 + (2^40 * a + c) * x3 - 2^41 * b^2],
         [x2 + BigInt(2)^79, x1 + (BigInt(2)^80 * a + c) * x3 - BigInt(2)^81 * b^2],
-        [x1 + (2^31 + 5)//(2^30) * x2, x2^2 - x2 + 1],
+        [x1 + (2^31 + 5) // (2^30) * x2, x2^2 - x2 + 1],
         [x1 + BigInt(2)^1000]
     ]
     test_paramgb(cases, answers)
 
-    F = [x1 + a*b^3 // BigInt(2)^100 * x2]
+    F = [x1 + a * b^3 // BigInt(2)^100 * x2]
     ParamPunPam.paramgb(F)
-
 end
 
 @testset "Noon" begin
     Rparam, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
-    R, (x1, x2, x3) = polynomial_ring(
-        Nemo.fraction_field(Rparam),
-        ["x1", "x2", "x3"],
-        internal_ordering=:degrevlex
-    )
+    R, (x1, x2, x3) = polynomial_ring(Nemo.fraction_field(Rparam), ["x1", "x2", "x3"], internal_ordering=:degrevlex)
     f = [
         a * x1 * x2^2 + (a + c) * x1 * x3^2 - b * x1 + a,
         a * x1^2 * x2 + (a + b) * x2 * x3^2 - b * x2 + a,
@@ -318,11 +242,7 @@ end
     ParamPunPam.paramgb(f)
 
     Rparam, (a1, a2, a3, a4, a5, a6) = polynomial_ring(Nemo.QQ, ["a$i" for i in 1:6])
-    R, (x1, x2, x3) = polynomial_ring(
-        Nemo.fraction_field(Rparam),
-        ["x1", "x2", "x3"],
-        internal_ordering=:degrevlex
-    )
+    R, (x1, x2, x3) = polynomial_ring(Nemo.fraction_field(Rparam), ["x1", "x2", "x3"], internal_ordering=:degrevlex)
     f = [
         x1 * x2^2 + (a1 + a2 + a3) * x1 * x3^2 - (a2 + a5 + a6),
         x1^2 * x2 + (a1 + a2) * x2 * x3^2 - a2 * x2 + a1,
@@ -331,15 +251,7 @@ end
     ParamPunPam.paramgb(f)
 
     Rparam, Ai = polynomial_ring(Nemo.QQ, ["A$i" for i in 1:7])
-    R, (x, y, z) = polynomial_ring(
-        Nemo.fraction_field(Rparam),
-        ["x", "y", "z"],
-        internal_ordering=:degrevlex
-    )
-    f = [
-        sum(Ai) * x * y + (Ai[1] + Ai[6]) // (sum(Ai)),
-        y * z - sum(Ai),
-        x^2 + Ai[5] // (sum(Ai))
-    ]
+    R, (x, y, z) = polynomial_ring(Nemo.fraction_field(Rparam), ["x", "y", "z"], internal_ordering=:degrevlex)
+    f = [sum(Ai) * x * y + (Ai[1] + Ai[6]) // (sum(Ai)), y * z - sum(Ai), x^2 + Ai[5] // (sum(Ai))]
     ParamPunPam.paramgb(f)
 end

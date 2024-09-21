@@ -31,11 +31,7 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
         @debug "Constructing a blackbox from $(length(polys)) input polynomials"
         if Ra isa Nemo.FracField
             Ra = base_ring(Ra)
-            Rlifted, _ = polynomial_ring(
-                Ra,
-                map(string, gens(Rx)),
-                internal_ordering=Nemo.internal_ordering(Rx)
-            )
+            Rlifted, _ = polynomial_ring(Ra, map(string, gens(Rx)), internal_ordering=Nemo.internal_ordering(Rx))
             polys = liftcoeffs(polys, Rlifted)
         end
         K = base_ring(Ra)
@@ -44,18 +40,14 @@ mutable struct BasicBlackboxIdeal{PolyQQX} <: AbstractBlackboxIdeal
     end
 end
 
-AbstractAlgebra.base_ring(ideal::BasicBlackboxIdeal) =
-    base_ring(base_ring(first(ideal.polys)))
+AbstractAlgebra.base_ring(ideal::BasicBlackboxIdeal) = base_ring(base_ring(first(ideal.polys)))
 AbstractAlgebra.parent(ideal::BasicBlackboxIdeal) = parent(first(ideal.polys))
 parent_params(ideal::BasicBlackboxIdeal) = base_ring(parent(first(ideal.polys)))
 Base.length(ideal::BasicBlackboxIdeal) = length(ideal.polys)
 
 function reduce_mod_p!(ideal::BasicBlackboxIdeal, finite_field)
     @debug "Reducing modulo $(finite_field).."
-    ideal.polys_mod_p = map(
-        poly -> map_coefficients(f -> map_coefficients(c -> finite_field(c), f), poly),
-        ideal.polys
-    )
+    ideal.polys_mod_p = map(poly -> map_coefficients(f -> map_coefficients(c -> finite_field(c), f), poly), ideal.polys)
     nothing
 end
 

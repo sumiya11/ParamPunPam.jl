@@ -151,10 +151,7 @@ function get_evaluation_points!(cl::CuytLee)
     cl.points
 end
 
-function interpolate!(
-    cl::CuytLee,
-    evaluations::Vector{FiniteFieldElem}
-) where {FiniteFieldElem}
+function interpolate!(cl::CuytLee, evaluations::Vector{FiniteFieldElem}) where {FiniteFieldElem}
     T = cl.T
     R = cl.ring
     xs = gens(R)
@@ -197,14 +194,7 @@ function interpolate!(
     @debug "" P_coeffs Q_coeffs
     success = true
 
-    for (
-        cfs,
-        interpolated,
-        degreebound,
-        higher_contributions,
-        polynomial_interpolator,
-        T_bound
-    ) in (
+    for (cfs, interpolated, degreebound, higher_contributions, polynomial_interpolator, T_bound) in (
         (P_coeffs, P_interpolated, Nd, P_higher_degrees_contribution, Ni, Nt),
         (Q_coeffs, Q_interpolated, Dd, Q_higher_degrees_contribution, Di, Dt)
     )
@@ -235,19 +225,14 @@ function interpolate!(
                 y_points[i] = y_points[i] - higher_contributions[i][deg + 1]
             end
 
-            success_i, poly = interpolate!(
-                polynomial_interpolator,
-                ωs[1:(2 * T_bound)],
-                y_points[1:(2 * T_bound)]
-            )
+            success_i, poly = interpolate!(polynomial_interpolator, ωs[1:(2 * T_bound)], y_points[1:(2 * T_bound)])
             interpolated[idx] = poly
             success = success_i && success
 
             @debug "Interpolated $(interpolated[idx])"
             # update the contributions of higher degree term expansions 
             # to the lower degree coefficients
-            expansion =
-                collect(terms(evaluate(interpolated[idx], (xs .* inv.(dilation)) .+ shift)))
+            expansion = collect(terms(evaluate(interpolated[idx], (xs .* inv.(dilation)) .+ shift)))
             @debug """
             Expansion of interpolated coefficient:
             $expansion

@@ -19,8 +19,7 @@ append!(
     ]
 )
 
-R, (x0, x1, x2, x3, x4) =
-    polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x0", "x1", "x2", "x3", "x4"])
+R, (x0, x1, x2, x3, x4) = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x0", "x1", "x2", "x3", "x4"])
 append!(cases, [(x1 * x4 - x2 * x3) // R(1)])
 
 R, xi = polynomial_ring(Nemo.Native.GF(2^62 + 135), ["x$i" for i in 1:10])

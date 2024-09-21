@@ -31,7 +31,6 @@ include("groebner/paramgb.jl")
 export paramgb
 export AbstractBlackboxIdeal, BasicBlackboxIdeal
 
-export Lex,
-    DegLex, DegRevLex, InputOrdering, WeightedOrdering, ProductOrdering, MatrixOrdering
+export Lex, DegLex, DegRevLex, InputOrdering, WeightedOrdering, ProductOrdering, MatrixOrdering
 
 end

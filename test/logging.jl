@@ -17,17 +17,7 @@ Logging.min_enabled_level(logger::MyLogger) = Logging.min_enabled_level(logger._
 Logging.shouldlog(logger::MyLogger, level, _module, group, id) =
     Logging.shouldlog(logger._logger, level, _module, group, id)
 Logging.handle_message(logger, level, message, _module, group, id, file, line; kwargs...) =
-    Logging.handle_message(
-        logger._logger,
-        level,
-        message,
-        _module,
-        group,
-        id,
-        file,
-        line;
-        kwargs...
-    )
+    Logging.handle_message(logger._logger, level, message, _module, group, id, file, line; kwargs...)
 
 loggers_to_test = [
     version_agnostic_logger(ConsoleLogger, Logging.Warn),
@@ -41,11 +31,7 @@ loggers_to_test = [
 
 @testset "Generic logging" begin
     Ra, (a, b, c) = polynomial_ring(Nemo.QQ, ["a", "b", "c"])
-    Rx, (x, y, z) = polynomial_ring(
-        Nemo.fraction_field(Ra),
-        ["x", "y", "z"],
-        internal_ordering=:degrevlex
-    )
+    Rx, (x, y, z) = polynomial_ring(Nemo.fraction_field(Ra), ["x", "y", "z"], internal_ordering=:degrevlex)
     F = [y + z + 2^10, x + a^2 // (b + c)]
 
     for logger in loggers_to_test

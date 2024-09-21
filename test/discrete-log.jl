@@ -22,8 +22,7 @@
     PF = ParamPunPam.PrecomputedField(F)
     buf = ParamPunPam.DiscreteLogBuffers(PF)
     # for some generators of F
-    for a in
-        [2, 3, 7, 8, 11, 12, 15, 18, 26, 27, 28, 29, 34, 35, 38, 40, 42, 46, 48, 50, 98, 99]
+    for a in [2, 3, 7, 8, 11, 12, 15, 18, 26, 27, 28, 29, 34, 35, 38, 40, 42, 46, 48, 50, 98, 99]
         a = F(a)
         for d in 0:99
             y = a^d

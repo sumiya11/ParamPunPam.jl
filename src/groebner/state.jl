@@ -15,10 +15,7 @@ mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
     gb_context::Any
     gb_ordering::OrderingGb
 
-    function GroebnerState(
-        blackbox::Blackbox,
-        ord::Ord
-    ) where {Blackbox <: AbstractBlackboxIdeal, Ord}
+    function GroebnerState(blackbox::Blackbox, ord::Ord) where {Blackbox <: AbstractBlackboxIdeal, Ord}
         Rx = parent(blackbox)
         Ra = parent_params(blackbox)
         params = gens(Ra)
@@ -53,11 +50,9 @@ function reconstruct_crt!(state, modular)
     char = UInt64(characteristic(modular.finite_field))
     if length(field_to_param_exponents) == 1
         shape = state.shape
-        param_coeffs_crt =
-            Vector{Vector{Tuple{Vector{BigInt},Vector{BigInt}}}}(undef, length(shape))
+        param_coeffs_crt = Vector{Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}}(undef, length(shape))
         for i in 1:length(param_coeffs_crt)
-            param_coeffs_crt[i] =
-                Vector{Tuple{Vector{BigInt},Vector{BigInt}}}(undef, length(shape[i]))
+            param_coeffs_crt[i] = Vector{Tuple{Vector{BigInt}, Vector{BigInt}}}(undef, length(shape[i]))
             for j in 1:length(param_coeffs_crt[i])
                 P, Q = state.param_exponents[i][j]
                 Pcoeffs = map(c -> BigInt(data(c)), collect(coefficients(P)))
@@ -76,8 +71,7 @@ function reconstruct_crt!(state, modular)
     for i in 1:length(mults)
         mults[i] = BigInt(0)
     end
-    buf, n1, n2, M, bigch =
-        BigInt(), BigInt(), BigInt(), BigInt(), BigInt()
+    buf, n1, n2, M, bigch = BigInt(), BigInt(), BigInt(), BigInt(), BigInt()
     Groebner.crt_precompute!(M, n1, n2, mults, UInt64.(Nemo.characteristic.(fields)))
     cfs = zeros(UInt64, length(fields))
     param_coeffs_crt = state.param_coeffs_crt
@@ -138,11 +132,8 @@ function reconstruct_rational!(state, modular)
     blackbox = state.blackbox
     Rorig = parent(blackbox)
     Rparam = parent_params(blackbox)
-    Rorig_frac, _ = polynomial_ring(
-        Nemo.fraction_field(Rparam),
-        symbols(Rorig),
-        internal_ordering=Nemo.internal_ordering(Rorig)
-    )
+    Rorig_frac, _ =
+        polynomial_ring(Nemo.fraction_field(Rparam), symbols(Rorig), internal_ordering=Nemo.internal_ordering(Rorig))
     Rparam_frac = base_ring(Rorig_frac)
     polysreconstructed = Vector{elem_type(Rorig_frac)}(undef, length(state.shape))
     modulo = modular.modulo
@@ -178,8 +169,7 @@ function reconstruct_rational!(state, modular)
             coeffsrec[j] = param_num // param_den
         end
         @debug "QQ-Reconstructed coefficients" coeffsrec
-        polysreconstructed[i] =
-            Rorig_frac(coeffsrec, map(e -> exponent_vector(e, 1), state.shape[i]))
+        polysreconstructed[i] = Rorig_frac(coeffsrec, map(e -> exponent_vector(e, 1), state.shape[i]))
     end
     state.param_basis = polysreconstructed
     true
@@ -199,19 +189,14 @@ function assess_correctness_mod_p(state, modular)
     basis_specialized_coeffs = map(
         f -> map(
             c ->
-                evaluate(map_coefficients(cc -> finite_field(cc), numerator(c)), point) // evaluate(
-                    map_coefficients(cc -> finite_field(cc), denominator(c)),
-                    point
-                ),
+                evaluate(map_coefficients(cc -> finite_field(cc), numerator(c)), point) //
+                evaluate(map_coefficients(cc -> finite_field(cc), denominator(c)), point),
             collect(coefficients(f))
         ),
         state.param_basis
     )
     param_basis_specialized = map(
-        i -> R_zp(
-            basis_specialized_coeffs[i],
-            collect(exponent_vectors(state.param_basis[i]))
-        ),
+        i -> R_zp(basis_specialized_coeffs[i], collect(exponent_vectors(state.param_basis[i]))),
         1:length(basis_specialized_coeffs)
     )
     @debug "Evaluated basis" param_basis_specialized

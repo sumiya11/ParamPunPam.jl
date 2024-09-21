@@ -15,10 +15,7 @@ mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
     gb_context::Any
     gb_ordering::OrderingGb
 
-    function GroebnerState(
-        blackbox::Blackbox,
-        ord::Ord
-    ) where {Blackbox <: AbstractBlackboxIdeal, Ord}
+    function GroebnerState(blackbox::Blackbox, ord::Ord) where {Blackbox <: AbstractBlackboxIdeal, Ord}
         Rx = parent(blackbox)
         Ra = parent_params(blackbox)
         params = gens(Ra)
@@ -26,9 +23,7 @@ mutable struct GroebnerState{Blackbox, FF, PolyFF, PolyFracQQ, OrderingGb}
         K = base_ring(Ra)
         @debug "Given $(length(blackbox)) functions in $K($(join(repr.(params),", ")))[$(join(repr.(polyvars),", "))]"
         PolyFF = Nemo.fpMPolyRingElem
-        PolyFracQQ = AbstractAlgebra.Generic.MPoly{
-            AbstractAlgebra.Generic.FracFieldElem{Nemo.QQMPolyRingElem}
-        }
+        PolyFracQQ = AbstractAlgebra.Generic.MPoly{AbstractAlgebra.Generic.FracFieldElem{Nemo.QQMPolyRingElem}}
         FF = Nemo.fpField
         new{Blackbox, FF, PolyFF, PolyFracQQ, typeof(ord)}(
             blackbox,
@@ -70,10 +65,7 @@ function assess_correctness_mod_p(state, modular)
         state.param_basis
     )
     param_basis_specialized = map(
-        i -> R_zp(
-            basis_specialized_coeffs[i],
-            collect(exponent_vectors(state.param_basis[i]))
-        ),
+        i -> R_zp(basis_specialized_coeffs[i], collect(exponent_vectors(state.param_basis[i]))),
         1:length(basis_specialized_coeffs)
     )
     @debug "Evaluated basis" param_basis_specialized

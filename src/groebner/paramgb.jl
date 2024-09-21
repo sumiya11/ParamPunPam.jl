@@ -184,8 +184,7 @@ function discover_shape!(state, modular; η=2)
     # specialize at a random lucky point and compute GBs
     randompoints = map(_ -> randluckyspecpoint(state, modular.finite_field), 1:(1 + η))
     polysspecmodp = map(point -> specialize_mod_p(blackbox, point), randompoints)
-    gb_context, gb =
-        groebner_learn(polysspecmodp[1], ordering=ord)
+    gb_context, gb = groebner_learn(polysspecmodp[1], ordering=ord)
     state.gb_context = gb_context
     bases = empty(polysspecmodp)
     for i in 1:length(polysspecmodp)
@@ -238,8 +237,7 @@ function discover_total_degrees!(state, modular, up_to_degree)
     interpolated = Vector{Vector{Tuple{elem_type(Ru), elem_type(Ru)}}}(undef, length(shape))
     degrees = Vector{Vector{Tuple{Int, Int}}}(undef, length(shape))
     @inbounds for i in 1:length(shape)
-        interpolated[i] =
-            Vector{Tuple{elem_type(Ru), elem_type(Ru)}}(undef, length(shape[i]))
+        interpolated[i] = Vector{Tuple{elem_type(Ru), elem_type(Ru)}}(undef, length(shape[i]))
         degrees[i] = Vector{Tuple{Int, Int}}(undef, length(shape[i]))
         coeffs[i] = Vector{Vector{elem_type(K)}}(undef, length(shape[i]))
         for j in 1:length(shape[i])
@@ -285,12 +283,7 @@ function discover_total_degrees!(state, modular, up_to_degree)
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
             flag, basis = groebner_apply!(gb_context, Ip)
-            update!(
-                prog,
-                idx,
-                spinner=_progressbar_spinner,
-                valuecolor=_progressbar_value_color
-            )
+            update!(prog, idx, spinner=_progressbar_spinner, valuecolor=_progressbar_value_color)
             # TODO: just select another batch of points, no need to throw
             !flag && __throw_unlucky_cancellation()
             !check_shape(shape, basis) && __throw_unlucky_cancellation()
@@ -343,23 +336,14 @@ end
 # Interpolates the exponents of the parametric coefficients of the Groebner
 # basis. Assumes that the order of the selected finite field is large enough for
 # this.
-function interpolate_exponents!(
-    state,
-    modular,
-    up_to_degree,
-    ::Type{InterpolatorType}
-) where {InterpolatorType}
+function interpolate_exponents!(state, modular, up_to_degree, ::Type{InterpolatorType}) where {InterpolatorType}
     @debug "Interpolating the exponents in parameters.."
     blackbox = state.blackbox
     ord = state.gb_ordering
     reduce_mod_p!(blackbox, modular.finite_field)
     Rx = parent(blackbox)
     Ra = base_ring(Rx)
-    Ru, _ = polynomial_ring(
-        modular.finite_field,
-        symbols(Ra),
-        internal_ordering=Nemo.internal_ordering(Ra)
-    )
+    Ru, _ = polynomial_ring(modular.finite_field, symbols(Ra), internal_ordering=Nemo.internal_ordering(Ra))
     K = base_ring(Ru)
     n = length(gens(Ra))
     shape = state.shape
@@ -375,36 +359,30 @@ function interpolate_exponents!(
     Nds, Dds = repeat([Nd], n), repeat([Dd], n)
 
     if !is_interpolation_feasible(max(Nd, Dd), K, n)
-        @warn "In the prime number interpolation approach the field order might be too small" Nd Dd n max(
-            Nd,
-            Dd
-        ) * log(
-            n
-        ) log(BigInt(order(K)))
+        @warn "In the prime number interpolation approach the field order might be too small" Nd Dd n max(Nd, Dd) *
+                                                                                                      log(n) log(
+            BigInt(order(K))
+        )
     end
 
     # The current number of terms
     Nt, Dt = 1, 1
     npoints = 0
-    param_exponents =
-        Vector{Vector{Tuple{elem_type(Ru), elem_type(Ru)}}}(undef, length(shape))
+    param_exponents = Vector{Vector{Tuple{elem_type(Ru), elem_type(Ru)}}}(undef, length(shape))
     coeffs = Vector{Vector{Vector{elem_type(K)}}}(undef, length(shape))
     must_be_interpolated = Vector{Vector{Bool}}(undef, length(shape))
     @inbounds for i in 1:length(shape)
-        param_exponents[i] =
-            Vector{Tuple{elem_type(Ru), elem_type(Ru)}}(undef, length(shape[i]))
+        param_exponents[i] = Vector{Tuple{elem_type(Ru), elem_type(Ru)}}(undef, length(shape[i]))
         coeffs[i] = Vector{Vector{elem_type(K)}}(undef, length(shape[i]))
         must_be_interpolated[i] = Vector{Bool}(undef, length(shape[i]))
         for j in 1:length(shape[i])
             coeffs[i][j] = Vector{elem_type(K)}(undef, npoints)
             param_exponents[i][j] = Ru(1), Ru(1)
             must_be_interpolated[i][j] = true
-            if total_degrees[i][j][1] > up_to_degree[1] ||
-               total_degrees[i][j][2] > up_to_degree[2]
+            if total_degrees[i][j][1] > up_to_degree[1] || total_degrees[i][j][2] > up_to_degree[2]
                 must_be_interpolated[i][j] = false
             end
-            if total_degrees[i][j][1] == DEGREE_TOO_LARGE ||
-               total_degrees[i][j][2] == DEGREE_TOO_LARGE
+            if total_degrees[i][j][1] == DEGREE_TOO_LARGE || total_degrees[i][j][2] == DEGREE_TOO_LARGE
                 must_be_interpolated[i][j] = false
             end
         end
@@ -430,12 +408,10 @@ function interpolate_exponents!(
     while !maybe_correct_basis
         # The inner loop is governed by several heuristics
         if attempts <= 0
-            __throw_something_went_wrong(
-                """
-                Exceeded the maximum number of attempts to interpolate the basis. 
-                This should not happen normally.
-                Please consider submitting a Github issue."""
-            )
+            __throw_something_went_wrong("""
+                                         Exceeded the maximum number of attempts to interpolate the basis. 
+                                         This should not happen normally.
+                                         Please consider submitting a Github issue.""")
         end
         maybe_correct_basis = true
         all_interpolated = false
@@ -503,8 +479,7 @@ function interpolate_exponents!(
         # Check that the interpolated result is correct at a random point
         random_point = distinct_nonzero_points(K, n)
         Ip = specialize_mod_p(blackbox, random_point)
-        flag, gb_at_random_point =
-            groebner_apply!(gb_context, Ip)
+        flag, gb_at_random_point = groebner_apply!(gb_context, Ip)
         !flag && __throw_unlucky_cancellation()
         @debug """
         Checking interpolated coefficients at a random points. 
@@ -524,9 +499,7 @@ function interpolate_exponents!(
                 end
                 gb_coeff = coeff(gb_at_random_point[i], j)
                 interpolated_num, interpolated_den = param_exponents[i][j]
-                evaluated_coeff =
-                    evaluate(interpolated_num, random_point) //
-                    evaluate(interpolated_den, random_point)
+                evaluated_coeff = evaluate(interpolated_num, random_point) // evaluate(interpolated_den, random_point)
                 if gb_coeff != evaluated_coeff
                     maybe_correct_basis = false
                     break

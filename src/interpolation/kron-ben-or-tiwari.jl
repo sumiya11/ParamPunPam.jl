@@ -70,8 +70,7 @@ function subsdegrees(Ds::Vector{<:Integer})
     ans
 end
 
-subsbackward(bot::KronBenOrTiwari, monoms::Vector{I}) where {I} =
-    map(m -> subsbackward(bot, m), monoms)
+subsbackward(bot::KronBenOrTiwari, monoms::Vector{I}) where {I} = map(m -> subsbackward(bot, m), monoms)
 function subsbackward(bot::KronBenOrTiwari, monom::I) where {I}
     Dsubs = bot.Dsubs
     n = length(Dsubs) - 1

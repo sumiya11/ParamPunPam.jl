@@ -23,9 +23,7 @@ FIELDS = [Nemo.Native.GF(2^62 + 135), Nemo.Native.GF(2^31 - 1)]
         for f in cases
             xs = ParamPunPam.distinct_nonzero_points(ground, max(degree(f) + 1, 1))
             ys = map(x -> evaluate(f, x), xs)
-            @test f ==
-                  Nemo.interpolate(R, xs, ys) ==
-                  ParamPunPam.fastpolyinterpolate(R, xs, ys)
+            @test f == Nemo.interpolate(R, xs, ys) == ParamPunPam.fastpolyinterpolate(R, xs, ys)
         end
 
         # random tests
@@ -35,9 +33,7 @@ FIELDS = [Nemo.Native.GF(2^62 + 135), Nemo.Native.GF(2^31 - 1)]
             f = (1 + a * rand(0:1)) * (1 + b * rand(0:1)) * (1 + c * rand(0:1))
             xs = ParamPunPam.distinct_nonzero_points(ground, max(degree(f) + 1, 1))
             ys = map(x -> evaluate(f, x), xs)
-            @test f ==
-                  Nemo.interpolate(R, xs, ys) ==
-                  ParamPunPam.fastpolyinterpolate(R, xs, ys)
+            @test f == Nemo.interpolate(R, xs, ys) == ParamPunPam.fastpolyinterpolate(R, xs, ys)
         end
     end
 end
@@ -69,8 +65,7 @@ end
             ω = [ParamPunPam.randomgenerator(ground)]
             vs = map(m -> evaluate(m, ω), collect(monomials(f)))
             ys = map(i -> evaluate(f, ω .^ i), 0:(length(vs) - 1))
-            @test collect(coefficients(f)) ==
-                  ParamPunPam.solve_transposed_vandermonde(Runiv, vs, ys)
+            @test collect(coefficients(f)) == ParamPunPam.solve_transposed_vandermonde(Runiv, vs, ys)
         end
     end
 end

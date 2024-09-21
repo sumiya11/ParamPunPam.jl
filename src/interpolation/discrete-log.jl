@@ -9,8 +9,7 @@ mutable struct PrecomputedField{Field}
     extensiondeg::Int
 
     function PrecomputedField(K::Field) where {Field}
-        Nemo.order(K) > typemax(Int) &&
-            @warn "The field is too large for discrete logarithms."
+        Nemo.order(K) > typemax(Int) && @warn "The field is too large for discrete logarithms."
         ordmult = Int(Nemo.order(K) - 1)
         factors = collect(Primes.factor(Dict, ordmult))
         new{Field}(K, ordmult, factors, Nemo.degree(K))
@@ -28,12 +27,7 @@ mutable struct DiscreteLogBuffers{Field, I}
         nfactors = length(PF.factors)
         largest = maximum(f -> first(f), PF.factors)
         baby = sizehint!(Dict{elem_type(PF.K), Int}(), isqrt(largest))
-        new{Field, elem_type(PF.K)}(
-            PF,
-            Vector{Int}(undef, nfactors),
-            Vector{Int}(undef, nfactors),
-            baby
-        )
+        new{Field, elem_type(PF.K)}(PF, Vector{Int}(undef, nfactors), Vector{Int}(undef, nfactors), baby)
     end
 end
 
