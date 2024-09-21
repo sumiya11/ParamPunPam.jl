@@ -70,27 +70,32 @@ function reconstruct_crt!(state, modular)
         modular.modulo *= char
         return nothing
     end
-    buf, n1, n2, M, bigch, invm1, invm2 =
-        BigInt(), BigInt(), BigInt(), BigInt(), BigInt(), BigInt(), BigInt()
-    # Base.GMP.MPZ.set_ui!(bigch, char)
-    # Base.GMP.MPZ.mul_ui!(M, modular.modulo, char)
-    # Base.GMP.MPZ.gcdext!(buf, invm1, invm2, modular.modulo, bigch)
-    Groebner.crt_precompute!(M, n1, n2, invm1, modular.modulo, invm2, char)
-    param_exponents = state.param_exponents
+    param_exponents = state.field_to_param_exponents
+    fields = collect(keys(state.field_to_param_exponents))
+    mults = Vector{BigInt}(undef, length(fields))
+    for i in 1:length(mults)
+        mults[i] = BigInt(0)
+    end
+    buf, n1, n2, M, bigch =
+        BigInt(), BigInt(), BigInt(), BigInt(), BigInt()
+    Groebner.crt_precompute!(M, n1, n2, mults, UInt64.(Nemo.characteristic.(fields)))
+    cfs = zeros(UInt64, length(fields))
     param_coeffs_crt = state.param_coeffs_crt
-    for i in 1:length(param_exponents)
-        for j in 1:length(param_exponents[i])
-            @assert length(param_exponents[i]) == length(param_coeffs_crt[i])
-            for k in 1:length(param_exponents[i][j][1])
-                ca = param_coeffs_crt[i][j][1][k]
-                cf = UInt64(data(coeff(param_exponents[i][j][1], k)))
-                Groebner.crt!(M, buf, n1, n2, ca, invm1, cf, invm2)
+    for i in 1:length(param_exponents[fields[1]])
+        for j in 1:length(param_exponents[fields[1]][i])
+            @assert length(param_exponents[fields[1]][i]) == length(param_coeffs_crt[i])
+            for k in 1:length(param_exponents[fields[1]][i][j][1])
+                for ell in 1:length(fields)
+                    cfs[ell] = UInt64(data(coeff(param_exponents[fields[ell]][i][j][1], k)))
+                end
+                Groebner.crt!(M, buf, n1, n2, cfs, mults)
                 Base.GMP.MPZ.set!(param_coeffs_crt[i][j][1][k], buf)
             end
-            for k in 1:length(param_exponents[i][j][2])
-                ca = param_coeffs_crt[i][j][2][k]
-                cf = UInt(data(coeff(param_exponents[i][j][2], k)))
-                Groebner.crt!(M, buf, n1, n2, ca, invm1, cf, invm2)
+            for k in 1:length(param_exponents[fields[1]][i][j][2])
+                for ell in 1:length(fields)
+                    cfs[ell] = UInt64(data(coeff(param_exponents[fields[ell]][i][j][2], k)))
+                end
+                Groebner.crt!(M, buf, n1, n2, cfs, mults)
                 Base.GMP.MPZ.set!(param_coeffs_crt[i][j][2][k], buf)
             end
         end

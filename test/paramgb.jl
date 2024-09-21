@@ -6,7 +6,6 @@ interpolators_to_test = [:VanDerHoevenLecerf, :CuytLee]
 function test_paramgb(cases, answers; kwargs...)
     for (case, answer) in zip(cases, answers)
         gb = ParamPunPam.paramgb(case; kwargs...)
-        @info "" case gb kwargs
         # Test that coefficients up to the given degrees coincide 
         if !haskey(kwargs, :up_to_degree)
             @test gb == answer

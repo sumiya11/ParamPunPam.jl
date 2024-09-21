@@ -185,12 +185,12 @@ function discover_shape!(state, modular; η=2)
     randompoints = map(_ -> randluckyspecpoint(state, modular.finite_field), 1:(1 + η))
     polysspecmodp = map(point -> specialize_mod_p(blackbox, point), randompoints)
     gb_context, gb =
-        groebner_learn(polysspecmodp[1], ordering=ord, loglevel=groebner_loglevel())
+        groebner_learn(polysspecmodp[1], ordering=ord)
     state.gb_context = gb_context
     bases = empty(polysspecmodp)
     for i in 1:length(polysspecmodp)
         F = polysspecmodp[i]
-        flag, gb = groebner_apply!(gb_context, F, loglevel=groebner_loglevel())
+        flag, gb = groebner_apply!(gb_context, F)
         update!(prog, i, spinner=_progressbar_spinner, valuecolor=_progressbar_value_color)
         if !flag
             @warn "Unlucky cancellation of coefficients encountered"
@@ -284,7 +284,7 @@ function discover_total_degrees!(state, modular, up_to_degree)
         for idx in J:npoints
             point = x_points[idx]
             Ip = specialize_mod_p(blackbox, point)
-            flag, basis = groebner_apply!(gb_context, Ip, loglevel=groebner_loglevel())
+            flag, basis = groebner_apply!(gb_context, Ip)
             update!(
                 prog,
                 idx,
@@ -453,7 +453,7 @@ function interpolate_exponents!(
             for idx in J:npoints
                 point = x_points[idx]
                 Ip = specialize_mod_p(blackbox, point)
-                flag, basis = groebner_apply!(gb_context, Ip, loglevel=groebner_loglevel())
+                flag, basis = groebner_apply!(gb_context, Ip)
                 update!(
                     prog,
                     idx,
@@ -504,7 +504,7 @@ function interpolate_exponents!(
         random_point = distinct_nonzero_points(K, n)
         Ip = specialize_mod_p(blackbox, random_point)
         flag, gb_at_random_point =
-            groebner_apply!(gb_context, Ip, loglevel=groebner_loglevel())
+            groebner_apply!(gb_context, Ip)
         !flag && __throw_unlucky_cancellation()
         @debug """
         Checking interpolated coefficients at a random points. 
