@@ -1,10 +1,7 @@
-# https://symbolicdata.github.io/PolynomialSystems
-# https://github.com/symbolicdata/data
-
-using Groebner
+using Groebner, Nemo
 
 ###
-# Source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Chou.302_1.xml
+# Chou-302
 
 P, (u1, u2, u3, u4, u5) = polynomial_ring(Nemo.QQ, [:u1, :u2, :u3, :u4, :u5])
 R, (x1, x2, x3, x4, x5, x6, x7, x8) =
@@ -21,10 +18,11 @@ system = [
     x1^2 * u3 - x1 * u1 * u3 + u1 * u2 * u4 - u2^2 * u4 - u3^2 * u4 + u3 * u4^2
 ]
 
-# @time ParamPunPam.paramgb(system);
+@time gb = groebner(system, ordering=DegRevLex());
+# 0.157679 seconds (603.54 k allocations: 47.704 MiB, 16.09% gc time)
 
 ###
-# source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Simson_3.xml
+# Simson-3
 
 P, (u1, u2, u3, u4) = polynomial_ring(Nemo.QQ, [:u1, :u2, :u3, :u4])
 R, (x1, x2, x3, x4, x5, x6, x7, x8, x9) = polynomial_ring(
@@ -45,14 +43,14 @@ system = [
     x1^2 + u1^2 - 2 * u1 * u4
 ]
 
-# @time ParamPunPam.paramgb(system)
+@time gb = groebner(system, ordering=DegRevLex());
+#  1.345450 seconds (2.62 M allocations: 551.188 MiB, 4.05% gc time)
 
 ###
-# Kat-param
+# Param-1 (katsura)
 
-using Groebner
-
-R, (a,b,x0,x1,x2,x3,x4) = polynomial_ring(fraction_field(P), [:a,:b,:x0,:x1,:x2,:x3,:x4], internal_ordering=:degrevlex)
+P, (a,b) = polynomial_ring(QQ, ["a","b"])
+R, (x0,x1,x2,x3,x4) = polynomial_ring(fraction_field(P), [:x0,:x1,:x2,:x3,:x4], internal_ordering=:degrevlex)
 system = [
     x0^2 + 2*x1^2 + 2*x2^2 + 2*x3^2 + 2*x4^2 - x0 - b,
     2*x0*x1 + 2*x1*x2 + 2*x2*x3 + 2*x3*x4 - x1,
@@ -60,6 +58,13 @@ system = [
     2*x1*x2 + 2*x0*x3 + 2*x1*x4 - x3,
     b*x0 + 2*x1 + 2*x2 + 2*x3 + 2*x4 - a
 ]
+
+@time gb = groebner(system, ordering=DegRevLex());
+# Timeout (>1 minute)
+
+###
+# Param-2 (katsura)
+
 system = [
     (b+1)*(x0^2 + 2*x1^2 + 2*x2^2 + 2*x3^2 + 2*x4^2 - x0) - b,
     (a+b)*(2*x0*x1 + 2*x1*x2 + 2*x2*x3 + 2*x3*x4 - x1) - b,
@@ -67,19 +72,8 @@ system = [
     (a-1)*(2*x1*x2 + 2*x0*x3 + 2*x1*x4 - x3) - b,
     x0 + 2*x1 + 2*x2 + 2*x3 + 2*x4 - a^3
 ]
-@time gb3 = Groebner.groebner(system, ordering=DegRevLex(x0,x1,x2,x3,x4)*DegRevLex(a,b));
 
-###
-# source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Vermeer.xml
-
-# using Groebner
-# R, (w, v, u, y, x) = polynomial_ring(Nemo.QQ, [:w, :v, :u, :y, :x])
-# system = [
-#     v^2 + u^2 - 2 * v * y + y^2 - 2 * u * x + x^2 - 1,
-#     -u^3 + v^2,
-#     -3 * v * u^2 + 3 * u^2 * y - 2 * v * u + 2 * v * x,
-#     6 * w^2 * v * u^2 - 3 * w * u^2 - 2 * w * v + 1
-# ]
-# @time ParamPunPam.paramgb(system);
+@time gb = groebner(system, ordering=DegRevLex());
+# Timeout (>1 minute)
 
 nothing

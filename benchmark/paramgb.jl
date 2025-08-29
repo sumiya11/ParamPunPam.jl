@@ -1,10 +1,7 @@
-# https://symbolicdata.github.io/PolynomialSystems
-# https://github.com/symbolicdata/data
-
-using Nemo, ParamPunPam
+using ParamPunPam, Nemo
 
 ###
-# Source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Chou.302_1.xml
+# Chou-302
 
 P, (u1, u2, u3, u4, u5) = polynomial_ring(Nemo.QQ, [:u1, :u2, :u3, :u4, :u5])
 R, (x1, x2, x3, x4, x5, x6, x7, x8) =
@@ -21,10 +18,11 @@ system = [
     x1^2 * u3 - x1 * u1 * u3 + u1 * u2 * u4 - u2^2 * u4 - u3^2 * u4 + u3 * u4^2
 ]
 
-@time ParamPunPam.paramgb(system);
+@time gb = ParamPunPam.paramgb(system, ordering=DegRevLex());
+#  1.981330 seconds (12.26 M allocations: 660.422 MiB, 17.96% gc time, 0.63% compilation time)
 
 ###
-# source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Simson_3.xml
+# Simson-3
 
 P, (u1, u2, u3, u4) = polynomial_ring(Nemo.QQ, [:u1, :u2, :u3, :u4])
 R, (x1, x2, x3, x4, x5, x6, x7, x8, x9) = polynomial_ring(
@@ -45,14 +43,13 @@ system = [
     x1^2 + u1^2 - 2 * u1 * u4
 ]
 
-@time ParamPunPam.paramgb(system)
+@time gb = ParamPunPam.paramgb(system, ordering=DegRevLex());
+#   0.788609 seconds (2.94 M allocations: 167.057 MiB, 25.87% gc time, 2.83% compilation time)
 
 ###
-# Kat-param
+# Param-1 (katsura)
 
-using Groebner
-
-P, (a,b) = polynomial_ring(QQ, ["a", "b"])
+P, (a,b) = polynomial_ring(QQ, ["a","b"])
 R, (x0,x1,x2,x3,x4) = polynomial_ring(fraction_field(P), [:x0,:x1,:x2,:x3,:x4], internal_ordering=:degrevlex)
 system = [
     x0^2 + 2*x1^2 + 2*x2^2 + 2*x3^2 + 2*x4^2 - x0 - b,
@@ -61,26 +58,22 @@ system = [
     2*x1*x2 + 2*x0*x3 + 2*x1*x4 - x3,
     b*x0 + 2*x1 + 2*x2 + 2*x3 + 2*x4 - a
 ]
-system = [
-    x0^2 + 2*x1^2 + 2*x2^2 + 2*x3^2 + 2*x4^2 - x0 - b//(b+1),
-    2*x0*x1 + 2*x1*x2 + 2*x2*x3 + 2*x3*x4 - x1 - b//(a+b),
-    x1^2 + 2*x0*x2 + 2*x1*x3 + 2*x2*x4 - x2 - a//b,
-    2*x1*x2 + 2*x0*x3 + 2*x1*x4 - x3 - b//(a-1),
-    x0 + 2*x1 + 2*x2 + 2*x3 + 2*x4 - a^3
-]
-@time gb3 = ParamPunPam.paramgb(system);
+
+@time gb = ParamPunPam.paramgb(system, ordering=DegRevLex());
+# Timeout (>1 minute)
 
 ###
-# source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Vermeer.xml
+# Param-2 (katsura)
 
-# using Groebner
-# R, (w, v, u, y, x) = polynomial_ring(Nemo.QQ, [:w, :v, :u, :y, :x])
-# system = [
-#     v^2 + u^2 - 2 * v * y + y^2 - 2 * u * x + x^2 - 1,
-#     -u^3 + v^2,
-#     -3 * v * u^2 + 3 * u^2 * y - 2 * v * u + 2 * v * x,
-#     6 * w^2 * v * u^2 - 3 * w * u^2 - 2 * w * v + 1
-# ]
-# @time ParamPunPam.paramgb(system);
+system = [
+    (b+1)*(x0^2 + 2*x1^2 + 2*x2^2 + 2*x3^2 + 2*x4^2 - x0) - b,
+    (a+b)*(2*x0*x1 + 2*x1*x2 + 2*x2*x3 + 2*x3*x4 - x1) - b,
+    b*(x1^2 + 2*x0*x2 + 2*x1*x3 + 2*x2*x4 - x2) - a,
+    (a-1)*(2*x1*x2 + 2*x0*x3 + 2*x1*x4 - x3) - b,
+    x0 + 2*x1 + 2*x2 + 2*x3 + 2*x4 - a^3
+]
+
+@time gb = ParamPunPam.paramgb(system, ordering=DegRevLex());
+# 13.389742 seconds (63.77 M allocations: 4.118 GiB, 12.63% gc time, 0.89% compilation time)
 
 nothing

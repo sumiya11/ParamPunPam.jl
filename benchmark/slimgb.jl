@@ -1,10 +1,7 @@
-# https://symbolicdata.github.io/PolynomialSystems
-# https://github.com/symbolicdata/data
-
 using Singular
 
 ###
-# Source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Chou.302_1.xml
+# Chou-302
 
 P, (u1, u2, u3, u4, u5) = polynomial_ring(QQ, [:u1, :u2, :u3, :u4, :u5])
 R, (x1, x2, x3, x4, x5, x6, x7, x8) =
@@ -21,10 +18,11 @@ system = [
     x1^2 * (u3//1) - x1 * (u1//1) * (u3//1) + u1 * (u2//1) * (u4//1) - u2^2 * (u4//1) - u3^2 * (u4//1) + u3 * (u4//1)^2
 ]
 
-# @time Singular.slimgb(Singular.Ideal(R, system));
+@time Singular.slimgb(Singular.Ideal(R, system));
+# 54.250032 seconds (12.79 M allocations: 33.071 GiB, 0.57% gc time, 0.04% compilation time)
 
 ###
-# source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Geometry.Simson_3.xml
+# Simson-3
 
 P, (u1, u2, u3, u4) = polynomial_ring(QQ, [:u1, :u2, :u3, :u4])
 R, (x1, x2, x3, x4, x5, x6, x7, x8, x9) = polynomial_ring(
@@ -46,18 +44,37 @@ system = [
 ]
 
 @time Singular.slimgb(Singular.Ideal(R, system));
+# Timeout (>1 minute)
 
-# ###
-# # source: https://github.com/symbolicdata/data/blob/master/XMLResources/IntPS/Vermeer.xml
+###
+# Param-1 (katsura)
 
-# # using Groebner
-# # R, (w, v, u, y, x) = polynomial_ring(Nemo.QQ, [:w, :v, :u, :y, :x])
-# # system = [
-# #     v^2 + u^2 - 2 * v * y + y^2 - 2 * u * x + x^2 - 1,
-# #     -u^3 + v^2,
-# #     -3 * v * u^2 + 3 * u^2 * y - 2 * v * u + 2 * v * x,
-# #     6 * w^2 * v * u^2 - 3 * w * u^2 - 2 * w * v + 1
-# # ]
-# # @time ParamPunPam.paramgb(system);
+P, (a,b) = polynomial_ring(QQ, [:a,:b])
+R, (x0,x1,x2,x3,x4) = polynomial_ring(Singular.AbstractAlgebra.fraction_field(P), [:x0,:x1,:x2,:x3,:x4], ordering=:degrevlex)
+system = [
+    x0^2 + 2*x1^2 + 2*x2^2 + 2*x3^2 + 2*x4^2 - x0 - b//1,
+    2*x0*x1 + 2*x1*x2 + 2*x2*x3 + 2*x3*x4 - x1,
+    x1^2 + 2*x0*x2 + 2*x1*x3 + 2*x2*x4 - x2,
+    2*x1*x2 + 2*x0*x3 + 2*x1*x4 - x3,
+    b//1*x0 + 2*x1 + 2*x2 + 2*x3 + 2*x4 - a//1
+]
+
+@time Singular.slimgb(Singular.Ideal(R, system));
+# Timeout (>1 minute)
+
+###
+# Param-2 (katsura)
+
+system = [
+    (b+1)//1*(x0^2 + 2*x1^2 + 2*x2^2 + 2*x3^2 + 2*x4^2 - x0) - b//1,
+    (a+b)//1*(2*x0*x1 + 2*x1*x2 + 2*x2*x3 + 2*x3*x4 - x1) - b//1,
+    b//1*(x1^2 + 2*x0*x2 + 2*x1*x3 + 2*x2*x4 - x2) - a//1,
+    (a-1)//1*(2*x1*x2 + 2*x0*x3 + 2*x1*x4 - x3) - b//1,
+    x0 + 2*x1 + 2*x2 + 2*x3 + 2*x4 - a^3//1
+]
+
+@time Singular.slimgb(Singular.Ideal(R, system));
+# Timeout (>1 minute)
 
 nothing
+
