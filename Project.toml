@@ -1,7 +1,7 @@
 name = "ParamPunPam"
 uuid = "3e851597-e36f-45a9-af0a-b7781937992f"
 authors = ["sumiya11", "pogudingleb"]
-version = "0.5.2"
+version = "0.5.3"
 
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
@@ -13,10 +13,10 @@ ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
-AbstractAlgebra = "0.42, 0.43, 0.44"
+AbstractAlgebra = "0.42, 0.43, 0.44, 0.45, 0.46, 0.47"
 Groebner = "0.8, 0.9"
 Logging = "1.10"
-Nemo = "0.46, 0.47, 0.48, 0.49"
+Nemo = "0.46, 0.47, 0.48, 0.49, 0.50, 0.51, 0.52"
 Primes = "0.5"
 ProgressMeter = "1.10"
 Random = "1.10"
