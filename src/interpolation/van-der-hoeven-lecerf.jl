@@ -209,7 +209,7 @@ function interpolate!(vdhl::VanDerHoevenLecerf, evaluations::Vector{FiniteFieldE
     den = evaluate(den, xs0)
     # normalize by the trailing_coefficient,
     # T*n*log(q)
-    normalization_factor = trailing_coefficient(den)
+    normalization_factor = iszero(den) ? zero(R) : trailing_coefficient(den)
     if !iszero(normalization_factor)
         num = map_coefficients(c -> div(c, normalization_factor), num, parent=R)
         den = map_coefficients(c -> div(c, normalization_factor), den, parent=R)
