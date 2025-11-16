@@ -21,14 +21,13 @@ include("interpolation/div-and-conq.jl")
 include("interpolation/kron-ben-or-tiwari.jl")
 include("interpolation/primes-ben-or-tiwari.jl")
 include("interpolation/van-der-hoeven-lecerf.jl")
-include("interpolation/cuyt-lee.jl")
 
 include("groebner/blackboxes.jl")
 include("groebner/state.jl")
 include("groebner/modular.jl")
 include("groebner/paramgb.jl")
 
-export paramgb
+export paramgb, paramgb_only_degrees
 export AbstractBlackboxIdeal, BasicBlackboxIdeal
 
 export Lex, DegLex, DegRevLex, InputOrdering, WeightedOrdering, ProductOrdering, MatrixOrdering

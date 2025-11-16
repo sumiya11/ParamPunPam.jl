@@ -42,6 +42,11 @@ function paramgb(polys::Vector{T}; kwargs...) where {T}
     paramgb(BasicBlackboxIdeal(polys); kwargs...)
 end
 
+function paramgb_only_degrees(polys::Vector{T}; kwargs...) where {T}
+    @assert !isempty(polys) "Empty input is not supported"
+    paramgb_only_degrees(BasicBlackboxIdeal(polys); kwargs...)
+end
+
 const _supported_kwargs = Set{Symbol}([
     :up_to_degree,
     :estimate_degrees,
@@ -109,6 +114,34 @@ function paramgb(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
         rational_interpolator,
         polynomial_interpolator
     )
+end
+
+"""
+    paramgb_only_degrees(blackbox) -> degrees
+
+Computes the total degrees of the coefficients of the reduced Groebner basis of the ideal represented with the given `blackbox`.
+Admissible blackboxes are subtypes of `AbstractBlackboxIdeal`.
+"""
+function paramgb_only_degrees(blackbox::T; kwargs...) where {T <: AbstractBlackboxIdeal}
+    up_to_degree = get(kwargs, :up_to_degree, (Inf, Inf))
+    @assert all(up_to_degree .> 0) "Total degrees must be greater than 0"
+    ordering = get(kwargs, :ordering, Groebner.InputOrdering())
+    up_to_degree_ = map(d -> isinf(d) ? div(typemax(Int), 2) : d, up_to_degree)
+    ord = AbstractAlgebra.internal_ordering(parent(blackbox))
+    _paramgb_only_degrees(
+        blackbox,
+        ordering,
+        up_to_degree_,
+    )
+end
+
+
+function _paramgb_only_degrees(blackbox, ordering, up_to_degree)
+    modular = ModularTracker(blackbox)
+    state = GroebnerState(blackbox, ordering)
+    discover_shape!(state, modular)
+    discover_total_degrees!(state, modular, up_to_degree)
+    state.param_degrees 
 end
 
 function _paramgb(
