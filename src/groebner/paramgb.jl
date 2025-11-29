@@ -393,7 +393,7 @@ function interpolate_exponents!(state, modular, up_to_degree, ::Type{Interpolato
 
     if !is_interpolation_feasible(max(Nd, Dd), K, n)
         @warn "In the prime number interpolation approach the field order might be too small" Nd Dd n max(Nd, Dd) *
-                                                                                                      log(n) log(
+                                                                                                      log(_first_primes[n]) log(
             BigInt(order(K))
         )
     end
