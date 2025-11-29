@@ -21,6 +21,7 @@ include("interpolation/div-and-conq.jl")
 include("interpolation/kron-ben-or-tiwari.jl")
 include("interpolation/primes-ben-or-tiwari.jl")
 include("interpolation/van-der-hoeven-lecerf.jl")
+include("interpolation/cuyt-lee.jl")
 
 include("groebner/blackboxes.jl")
 include("groebner/state.jl")
