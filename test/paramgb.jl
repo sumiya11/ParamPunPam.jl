@@ -133,6 +133,8 @@ end
         f = [x1 - a * b^2 + a^2 * b + a^3 + b^3, x3 - (a * b^3 + b * a^3)^3, x2 - a * b^3 + a^2 * b + a^4 + b^4]
         gb = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex(x3, x2, x1))
         @test gb == [x1 - a * b^2 + a^2 * b + a^3 + b^3, x2 - a * b^3 + a^2 * b + a^4 + b^4, x3 - (a * b^3 + b * a^3)^3]
+	degs = paramgb_only_degrees(f, ordering=ParamPunPam.Lex(x3, x2, x1), up_to_degree=(5, 10))
+	@test degs == [[(0, 0), (3, 0)], [(0, 0), (4, 0)], [(0, 0), (-1, -1)]]
 
         f = [x2 + a, x1 + b, x3 + c]
         gb1 = ParamPunPam.paramgb(f, ordering=ParamPunPam.Lex())
