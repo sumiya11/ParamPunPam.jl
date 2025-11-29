@@ -28,7 +28,7 @@ include("groebner/state.jl")
 include("groebner/modular.jl")
 include("groebner/paramgb.jl")
 
-export paramgb
+export paramgb, paramgb_only_degrees
 export AbstractBlackboxIdeal, BasicBlackboxIdeal
 
 export Lex, DegLex, DegRevLex, InputOrdering, WeightedOrdering, ProductOrdering, MatrixOrdering

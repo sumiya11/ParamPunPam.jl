@@ -1,5 +1,7 @@
 FIELDS = [Nemo.Native.GF(2^62 + 135), Nemo.Native.GF(2^31 - 1)]
 
+t1,t2 = 0, 0
+
 @testset "Univariate interpolate" begin
     for ground in FIELDS
         R, x = polynomial_ring(ground, "x")
@@ -23,6 +25,8 @@ FIELDS = [Nemo.Native.GF(2^62 + 135), Nemo.Native.GF(2^31 - 1)]
         for f in cases
             xs = ParamPunPam.distinct_nonzero_points(ground, max(degree(f) + 1, 1))
             ys = map(x -> evaluate(f, x), xs)
+            global t1 += @elapsed Nemo.interpolate(R, xs, ys)
+            global t2 += @elapsed ParamPunPam.fastpolyinterpolate(R, xs, ys)
             @test f == Nemo.interpolate(R, xs, ys) == ParamPunPam.fastpolyinterpolate(R, xs, ys)
         end
 
