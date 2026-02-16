@@ -1,3 +1,5 @@
+**This repository has been moved to [https://github.com/pogudingleb/RationalFunctionFields.jl](https://github.com/pogudingleb/RationalFunctionFields.jl/tree/main/ParamPunPam)**
+
 ### ParamPunPam.jl - parametric Groebner bases.
 
 [![Runtests](https://github.com/sumiya11/ParamPunPam.jl/actions/workflows/Runtests.yml/badge.svg)](https://github.com/sumiya11/ParamPunPam.jl/actions/workflows/Runtests.yml)
